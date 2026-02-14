@@ -123,6 +123,16 @@ namespace LibraryMS.Win.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Welcome_Back_to_Your_Library {
+            get {
+                object obj = ResourceManager.GetObject("Welcome Back to Your Library", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap WhatsApp_Image_2026_01_30_at_4_59_17_PM {
             get {
                 object obj = ResourceManager.GetObject("WhatsApp Image 2026-01-30 at 4.59.17 PM", resourceCulture);

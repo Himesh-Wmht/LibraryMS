@@ -1,15 +1,35 @@
-﻿namespace LibraryMS
+﻿using LibraryMS.BLL.Models;
+using LibraryMS.BLL.Services;
+using LibraryMS.Win.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace LibraryMS
 {
-    public partial class frmLogin : Form
+    public partial class frmLogin : Form, ILoginView
     {
         private bool _pwdVisible = false;
+        private readonly LoginPresenter _presenter;
+        private readonly System.Windows.Forms.Timer _typingTimer;
+        private readonly LocationService _locationService;
+        private readonly AuthService _authService;
 
-        public frmLogin()
+
+
+        // public string UserCode => throw new NotImplementedException();
+
+        public frmLogin(LocationService locationService, AuthService authService)
         {
             InitializeComponent();
 
+            _locationService = locationService ?? throw new ArgumentNullException(nameof(locationService));
+            _authService = authService ?? throw new ArgumentNullException(nameof(authService));
+
             this.Opacity = 1.0;
             this.TransparencyKey = Color.Empty;
+
             // Font size you want
             txtPassword.Font = new Font("Segoe UI", 14f);
             txtUserName.Font = new Font("Segoe UI", 14f);
@@ -27,13 +47,106 @@
 
             pictureBox2.BackColor = txtPassword.BackColor;   // usually white (SystemColors.Window)
             pictureBox2.BringToFront();
-            pictureBox2.Cursor = Cursors.Hand;
+            pictureBox2.Cursor = Cursors.Hand; 
 
+            // ---- NEW: presenter + debounce timer
+            _presenter = new LoginPresenter(this, locationService);
+
+            _typingTimer = new System.Windows.Forms.Timer { Interval = 200 };
+            _typingTimer.Tick += async (_, __) =>
+            {
+                _typingTimer.Stop();
+                await _presenter.LoadLocationsAsync();
+            };
+
+            txtUserName.TextChanged += (_, __) =>
+            {
+                _typingTimer.Stop();
+                _typingTimer.Start();
+
+                if (string.IsNullOrWhiteSpace(txtUserName.Text))
+                    BindLocations(new()); // clear combo quickly
+            };
+            cmbLoginlocs.DropDownStyle = ComboBoxStyle.DropDownList;
+            // initial combo state
+            BindLocations(new());
         }
+        public string UserCode => txtUserName.Text;
 
-        private void button1_Click(object sender, EventArgs e)
+        public void SetLocationLoading(bool isLoading)
         {
+            cmbLoginlocs.Enabled = !isLoading;
+            cmbLoginlocs.Cursor = isLoading ? Cursors.WaitCursor : Cursors.Default;
+        }
+        // ILoginView implementation
 
+        public void BindLocations(List<LocationItem> locations)
+        {
+            cmbLoginlocs.DropDownStyle = ComboBoxStyle.DropDownList;
+
+            var list = new List<LocationItem>
+            {
+                new LocationItem { Code = "", Desc = "-- Select Location --" }
+            };
+            list.AddRange(locations);
+
+            cmbLoginlocs.DataSource = null;
+            cmbLoginlocs.DataSource = list;
+            cmbLoginlocs.DisplayMember = "Desc";
+            cmbLoginlocs.ValueMember = "Code";
+            cmbLoginlocs.SelectedIndex = 0;
+        }
+        public void ShowError(string message)
+        {
+            MessageBox.Show(message, "Login", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+        private LocationItem? SelectedLocation =>
+            cmbLoginlocs.SelectedItem as LocationItem;
+
+        private async void button1_Click(object sender, EventArgs e)
+        {
+            var user = txtUserName.Text.Trim();
+            var pass = txtPassword.Text;
+
+            if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(pass))
+            {
+                ShowError("Enter Username and Password.");
+                return;
+            }
+
+            if (SelectedLocation == null || string.IsNullOrWhiteSpace(SelectedLocation.Code))
+            {
+                ShowError("Select a Location.");
+                return;
+            }
+
+            // 1) Validate user/password (hash verify)
+            var (result, session, msg) = await _authService.LoginAsync(user, pass);
+            if (result != AuthResult.LoginGranted || session == null)
+            {
+                ShowError(msg);
+                txtPassword.Clear();
+                txtPassword.Focus();
+                return;
+            }
+
+
+            // 2) Validate user has permission to login selected location
+            bool hasLoc = await _locationService.UserHasLocationAsync(user, SelectedLocation.Code);
+            if (!hasLoc)
+            {
+                ShowError("You do not have permission to login to this location.");
+                return;
+            }
+
+            // 3) Set session + continue
+            session.LocationCode = SelectedLocation.Code;
+            session.LocationDesc = SelectedLocation.Desc;
+
+            AppSession.Current = session;
+
+            this.DialogResult = DialogResult.OK;
+            this.Close();
         }
 
         private void panel2_Paint(object sender, PaintEventArgs e)
@@ -62,9 +175,6 @@
 
             _pwdVisible = !_pwdVisible;
             txtPassword.UseSystemPasswordChar = !_pwdVisible;
-
-            // Optional: change icon if you have resources
-            // pictureBox2.Image = _pwdVisible ? Properties.Resources.unlock : Properties.Resources.lock;
 
             txtPassword.Focus();
             txtPassword.SelectionStart = pos;
