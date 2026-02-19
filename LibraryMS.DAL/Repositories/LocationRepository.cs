@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Data.SqlClient;
 using LibraryMS.DAL.Core;
+using static LibraryMS.DAL.Repositories.Dtos;
 
 namespace LibraryMS.DAL.Repositories
 {
@@ -65,6 +66,25 @@ namespace LibraryMS.DAL.Repositories
                 throw DbExceptionHelper.Wrap("UserHasLocationAsync", ex); 
             }
           
+        }
+        public async Task<List<LocationDto>> GetActiveLocationsAsync()
+        {
+            const string sql = @"
+                                SELECT L_CODE, L_DESC
+                                FROM M_LOCATION
+                                WHERE L_ACTIVE = 1
+                                ORDER BY L_DESC;";
+
+            var list = new List<LocationDto>();
+            await using var con = _db.CreateConnection();
+            await using var cmd = new SqlCommand(sql, con);
+            await con.OpenAsync();
+            await using var r = await cmd.ExecuteReaderAsync();
+
+            while (await r.ReadAsync())
+                list.Add(new LocationDto(r.GetString(0), r.GetString(1)));
+
+            return list;
         }
     }
 }

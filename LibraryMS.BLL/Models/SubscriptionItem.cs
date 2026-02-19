@@ -6,12 +6,11 @@ using System.Threading.Tasks;
 
 namespace LibraryMS.BLL.Models
 {
-    public class MenuNode
+    public sealed class SubscriptionItem
     {
-        public string Code { get; init; } = "";
+        public string Id { get; init; } = "";
         public string Desc { get; init; } = "";
-        public string? Parent { get; init; }
-        public int ChildOrder { get; init; }   // ✅ add this
+        public int Days { get; init; }
     }
 
 }

@@ -11,15 +11,15 @@ namespace LibraryMS
             ApplicationConfiguration.Initialize();
 
             // Build services from appsettings.json
-            var services = AppBootstrapper.Build();
-
+            //  var services = AppBootstrapper.Build();
+            var services = AppBootstrapper.BuildAsync().GetAwaiter().GetResult();
             while (true)
             {
                 using var login = new frmLogin(services.Location, services.Auth);
                 if (login.ShowDialog() != DialogResult.OK)
                     break; // user cancelled login -> exit app
 
-                using var main = new LibraryMS.Win.frmMainWindow(services.Menu);
+                using var main = new LibraryMS.Win.frmMainWindow(services.Menu, services.Registration, services.Approval, services.GroupMenus);
                 // show main as dialog so we can return here on logout
                 var result = main.ShowDialog();
 

@@ -11,5 +11,6 @@ namespace LibraryMS.Win.Interfaces
         void OnEdit();
         Task OnSaveAsync();
         Task OnProcessAsync();
+        Task OnRefreshAsync();
     }
 }

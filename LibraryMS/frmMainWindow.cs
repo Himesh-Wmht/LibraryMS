@@ -8,15 +8,16 @@ using FontAwesome.Sharp;
 using LibraryMS.BLL.Models;
 using LibraryMS.BLL.Services;
 using LibraryMS.Win.Interfaces;
+using LibraryMS.Win.Pages;
 
 namespace LibraryMS.Win
 {
     public partial class frmMainWindow : Form
     {
         private readonly MenuService _menuService;
-
-        // Right side host panel (inside splitContainer1.Panel2)
-       // private readonly Panel panelPageHost;
+        private readonly RegistrationService _registrationService;
+        private readonly ApprovalService _approvalService;
+        private readonly GroupMenuService _groupMenuService;
 
         // Top actions (we keep references for enabling/disabling if needed)
         private IconButton btnRefresh = null!;
@@ -25,11 +26,14 @@ namespace LibraryMS.Win
         private IconButton btnProcess = null!;
         private IconButton btnLogout = null!;
 
-        public frmMainWindow(MenuService menuService)
+        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService)
         {
             InitializeComponent();
 
             _menuService = menuService ?? throw new ArgumentNullException(nameof(menuService));
+            _registrationService = registrationService;
+            _approvalService = approvalService ?? throw new ArgumentNullException(nameof(approvalService));
+            _groupMenuService = groupMenuService;
 
             // ---- SplitContainer standard layout ----
             splitContainer1.Dock = DockStyle.Fill;
@@ -64,6 +68,7 @@ namespace LibraryMS.Win
             Load += async (_, __) =>
             {
                 ApplySessionToTopBar();
+                await _groupMenuService.EnsureAsync();
                 await LoadMenusAsync();
             };
         }
@@ -204,47 +209,54 @@ namespace LibraryMS.Win
 
         private void BuildMenuTree(List<MenuNode> menus)
         {
+            tvMenus.BeginUpdate();
             tvMenus.Nodes.Clear();
 
+            // Build dictionary: parentCode -> children
             var byParent = menus
                 .GroupBy(m => m.Parent ?? "")
-                .ToDictionary(g => g.Key, g => g.ToList(), StringComparer.OrdinalIgnoreCase);
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderBy(x => x.ChildOrder).ThenBy(x => x.Code).ToList(),
+                    StringComparer.OrdinalIgnoreCase
+                );
 
-            if (!byParent.TryGetValue("", out var roots))
-                roots = new();
+            // Roots = parent is null/empty
+            byParent.TryGetValue("", out var roots);
+            roots ??= new List<MenuNode>();
 
-            foreach (var root in roots)
+            foreach (var root in roots.OrderBy(r => r.ChildOrder).ThenBy(r => r.Code))
             {
-                // store whole MenuNode (better than only Code)
-                var node = new TreeNode(root.Desc) { Tag = root };
-                AddChildren(node, root.Code, byParent);
-                tvMenus.Nodes.Add(node);
+                var rootNode = new TreeNode(root.Desc) { Tag = root };   // store full object
+                AddChildren(rootNode, root.Code, byParent);
+                tvMenus.Nodes.Add(rootNode);
             }
 
             tvMenus.ExpandAll();
+            tvMenus.EndUpdate();
         }
 
-        private void AddChildren(TreeNode parentNode, string parentCode,
-            Dictionary<string, List<MenuNode>> byParent)
+        private void AddChildren(TreeNode parentNode,string parentCode, Dictionary<string, List<MenuNode>> byParent)
         {
             if (!byParent.TryGetValue(parentCode, out var children)) return;
 
             foreach (var child in children)
             {
-                var node = new TreeNode(child.Desc) { Tag = child };
-                AddChildren(node, child.Code, byParent);
-                parentNode.Nodes.Add(node);
+                var childNode = new TreeNode(child.Desc) { Tag = child };
+                AddChildren(childNode, child.Code, byParent);
+                parentNode.Nodes.Add(childNode);
             }
         }
-
         private void TvMenus_AfterSelect(object? sender, TreeViewEventArgs e)
         {
-            if (e.Node.Nodes.Count > 0) return; // ignore parent nodes
+            // If it has children, it is a MAIN menu -> don't open a page
+            if (e.Node.Nodes.Count > 0) return;
 
             if (e.Node.Tag is not MenuNode menu) return;
 
             OpenMenu(menu);
         }
+
 
         private void OpenMenu(MenuNode menu)
         {
@@ -256,6 +268,17 @@ namespace LibraryMS.Win
                 Font = new Font("Segoe UI", 12f, FontStyle.Bold),
                 Text = $"Selected Menu: {menu.Code} - {menu.Desc}"
             });
+            if (menu.Code == "M00012") // REGISTRATION HANDLING
+            {
+                ShowPage(new LibraryMS.Win.Pages.UCRegistrationHandling(_registrationService));
+                return;
+            }
+            if (menu.Code == "M00003") // whatever code in DB
+            {
+                ShowPage(new UCApprovals(_approvalService));
+                return;
+            }
+
         }
 
         private void ShowPage(Control page)

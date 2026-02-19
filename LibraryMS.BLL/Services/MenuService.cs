@@ -22,7 +22,7 @@ namespace LibraryMS.BLL.Services
                 Code = x.Code,
                 Desc = x.Desc,
                 Parent = x.Parent,
-                Child = x.Child
+                ChildOrder = x.Child
             }).ToList();
         }
     }

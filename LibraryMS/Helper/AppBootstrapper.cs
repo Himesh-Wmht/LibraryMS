@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using LibraryMS.BLL.Services;
 using LibraryMS.DAL.Core;
 using LibraryMS.DAL.Repositories;
@@ -12,7 +9,7 @@ namespace LibraryMS.Win.Helper
 {
     public static class AppBootstrapper
     {
-        public static ServiceContainer Build()
+        public static async Task<ServiceContainer> BuildAsync()
         {
             var path = Path.Combine(AppContext.BaseDirectory, "appsettings.json");
             if (!File.Exists(path))
@@ -21,6 +18,7 @@ namespace LibraryMS.Win.Helper
             var config = new ConfigurationBuilder()
                 .AddJsonFile(path, optional: false)
                 .Build();
+
             var cs = config.GetConnectionString("DefaultConnection")
                      ?? throw new Exception("Missing DefaultConnection in appsettings.json");
 
@@ -29,21 +27,42 @@ namespace LibraryMS.Win.Helper
 
             // Repositories
             var userRepo = new UserRepository(db);
-            //var groupRepo = new UserGroupRepository(db);
+            var groupRepo = new UserGroupRepository(db);
+            var subRepo = new SubscriptionRepository(db);
             var menuRepo = new MenuRepository(db);
-            var menuService = new MenuService(menuRepo);
             var locRepo = new LocationRepository(db);
+            var regRepo = new UserRegistrationRepository(db);
+            var approvalRepo = new ApprovalRepository(db);
+            var groupMenuRepo = new GroupMenuRepository(db);
 
             // Services (BLL)
             var auth = new AuthService(userRepo);
-            //var menu = new MenuService(menuRepo);
+            var menuService = new MenuService(menuRepo);
+            var approvalService = new ApprovalService(approvalRepo);
+            var groupMenuService = new GroupMenuService(groupMenuRepo);
+
+            // NOTE: Your RegistrationService constructor must match this signature
+            var regService = new RegistrationService(db, groupRepo, subRepo, locRepo, regRepo, approvalRepo);
+
             var loc = new LocationService(locRepo);
 
-           // return new ServiceContainer(auth, menu, loc);
-            return new ServiceContainer(loc, auth, menuService);
+            return new ServiceContainer(
+                Location: loc,
+                Auth: auth,
+                Menu: menuService,
+                Registration: regService,
+                Approval: approvalService,
+                GroupMenus: groupMenuService
+            );
         }
     }
 
-    //public record ServiceContainer(AuthService Auth, MenuService Menu, LocationService Location);
-    public record ServiceContainer( LocationService Location, AuthService Auth, MenuService Menu);
+    public record ServiceContainer(
+        LocationService Location,
+        AuthService Auth,
+        MenuService Menu,
+        RegistrationService Registration,
+        ApprovalService Approval,
+        GroupMenuService GroupMenus
+    );
 }
