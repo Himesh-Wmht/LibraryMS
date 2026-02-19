@@ -16,7 +16,14 @@ namespace LibraryMS.DAL.Repositories
         public async Task<List<ApprovalRowDto>> GetPendingAsync()
         {
             const string sql = @"
- ";
+                            SELECT
+                                AP_ID, AP_U_ID, AP_U_UID, AP_NAME, AP_MOBILE, AP_GROUP, AP_SUBSTYPE,
+                                AP_PAIDAMT, AP_DUEAMT, AP_PAYMENTMETHOD, AP_REFERENCENO, AP_APPROVEDBY, AP_DATE,
+                                CAST(CASE WHEN ISNULL(AP_PROCCESS,0)=1 AND ISNULL(AP_CALCEL,0)=0 THEN 1 ELSE 0 END AS bit) AS IsApproved,
+                                CAST(CASE WHEN ISNULL(AP_PROCCESS,0)=1 AND ISNULL(AP_CALCEL,0)=1 THEN 1 ELSE 0 END AS bit) AS IsRejected
+                            FROM dbo.T_TBLAPPROVAL
+                            WHERE ISNULL(AP_PROCCESS,0)=0 AND ISNULL(AP_CALCEL,0)=0
+                            ORDER BY AP_DATE DESC;";
 
             try
             {
@@ -43,7 +50,9 @@ namespace LibraryMS.DAL.Repositories
                         PaymentMethod: r.IsDBNull(9) ? null : r.GetString(9),
                         ReferenceNo: r.IsDBNull(10) ? null : r.GetString(10),
                         ApprovedBy: r.IsDBNull(11) ? null : r.GetString(11),
-                        ApDate: r.IsDBNull(12) ? DateTime.MinValue : r.GetDateTime(12)
+                        ApDate: r.IsDBNull(12) ? DateTime.MinValue : r.GetDateTime(12),
+                        IsApproved: r.GetBoolean(13), 
+                        IsRejected: r.GetBoolean(14)
                     ));
                 }
 
@@ -57,8 +66,11 @@ namespace LibraryMS.DAL.Repositories
         public async Task<List<ApprovalRowDto>> GetAllAsync()
         {
             const string sql = @"
-                    SELECT AP_ID, AP_U_ID, AP_U_UID, AP_NAME, AP_MOBILE, AP_GROUP, AP_SUBSTYPE,
-                    AP_PAIDAMT, AP_DUEAMT, AP_PAYMENTMETHOD, AP_REFERENCENO, AP_APPROVEDBY, AP_DATE
+                    SELECT
+                        AP_ID, AP_U_ID, AP_U_UID, AP_NAME, AP_MOBILE, AP_GROUP, AP_SUBSTYPE,
+                        AP_PAIDAMT, AP_DUEAMT, AP_PAYMENTMETHOD, AP_REFERENCENO, AP_APPROVEDBY, AP_DATE,
+                        CAST(CASE WHEN ISNULL(AP_PROCCESS,0)=1 AND ISNULL(AP_CALCEL,0)=0 THEN 1 ELSE 0 END AS bit) AS IsApproved,
+                        CAST(CASE WHEN ISNULL(AP_PROCCESS,0)=1 AND ISNULL(AP_CALCEL,0)=1 THEN 1 ELSE 0 END AS bit) AS IsRejected
                     FROM dbo.T_TBLAPPROVAL
                     ORDER BY AP_DATE DESC;";
             try
@@ -86,7 +98,9 @@ namespace LibraryMS.DAL.Repositories
                         PaymentMethod: r.IsDBNull(9) ? null : r.GetString(9),
                         ReferenceNo: r.IsDBNull(10) ? null : r.GetString(10),
                         ApprovedBy: r.IsDBNull(11) ? null : r.GetString(11),
-                        ApDate: r.IsDBNull(12) ? DateTime.MinValue : r.GetDateTime(12)
+                        ApDate: r.IsDBNull(12) ? DateTime.MinValue : r.GetDateTime(12),
+                        IsApproved: r.GetBoolean(13),
+                        IsRejected: r.GetBoolean(14)
                     ));
                 }
 
@@ -106,15 +120,16 @@ namespace LibraryMS.DAL.Repositories
                             FROM dbo.T_TBLAPPROVAL WITH (UPDLOCK, HOLDLOCK)
                             WHERE AP_ID LIKE 'AP[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]';";
 
-                                        const string sqlInsert = @"
-                            INSERT INTO dbo.T_TBLAPPROVAL
-                            (AP_ID, AP_U_ID, AP_U_UID, AP_NAME, AP_MOBILE, AP_GROUP, AP_SUBSTYPE,
-                                AP_PAIDAMT, AP_DUEAMT, AP_PAYMENTMETHOD, AP_REFERENCENO,
-                                AP_APPROVEDBY, AP_DATE, AP_PROCCESS, AP_CALCEL)
-                            VALUES
-                            (@AP_ID, @AP_U_ID, @AP_U_UID, @AP_NAME, @AP_MOBILE, @AP_GROUP, @AP_SUBSTYPE,
-                                @AP_PAIDAMT, @AP_DUEAMT, @AP_PAYMENTMETHOD, @AP_REFERENCENO,
-                                NULL, GETDATE(), 0, 0);";
+            const string sqlInsert = @"
+                        INSERT INTO dbo.T_TBLAPPROVAL
+                        (AP_ID, AP_U_ID, AP_U_UID, AP_NAME, AP_MOBILE, AP_GROUP, AP_SUBSTYPE,
+                         AP_PAIDAMT, AP_DUEAMT, AP_PAYMENTMETHOD, AP_REFERENCENO,
+                         AP_APPROVEDBY, AP_DATE, AP_PROCCESS, AP_CALCEL)
+                        VALUES
+                        (@AP_ID, @AP_U_ID, @AP_U_UID, @AP_NAME, @AP_MOBILE, @AP_GROUP, @AP_SUBSTYPE,
+                         @AP_PAIDAMT, @AP_DUEAMT, @AP_PAYMENTMETHOD, @AP_REFERENCENO,
+                         @AP_APPROVEDBY, @AP_DATE, @AP_PROCCESS, @AP_CALCEL);";
+
 
             try
             {
@@ -140,7 +155,12 @@ namespace LibraryMS.DAL.Repositories
 
                     cmd.Parameters.Add("@AP_PAYMENTMETHOD", SqlDbType.NVarChar, 100).Value = (object?)dto.PaymentMethod ?? DBNull.Value;
                     cmd.Parameters.Add("@AP_REFERENCENO", SqlDbType.NVarChar, 100).Value = (object?)dto.ReferenceNo ?? DBNull.Value;
+                    cmd.Parameters.Add("@AP_APPROVEDBY", SqlDbType.NVarChar, 100).Value =(object?)dto.ApprovedBy ?? DBNull.Value;
 
+                    cmd.Parameters.Add("@AP_DATE", SqlDbType.DateTime).Value =dto.ApDate == default ? DateTime.Now : dto.ApDate;
+
+                    cmd.Parameters.Add("@AP_PROCCESS", SqlDbType.Bit).Value = dto.Processed;
+                    cmd.Parameters.Add("@AP_CALCEL", SqlDbType.Bit).Value = dto.Canceled;
                     await cmd.ExecuteNonQueryAsync();
                 }
 
@@ -238,5 +258,53 @@ namespace LibraryMS.DAL.Repositories
                 return (false, $"Reject failed: {ex.Message}");
             }
         }
+        public async Task<(bool ok, string message)> SettleDueAsync(string apId, decimal payAmount, string? paymentMethod, string? referenceNo)
+        {
+            const string sql = @"
+                        UPDATE dbo.T_TBLAPPROVAL
+                        SET
+                            AP_PAIDAMT = ISNULL(AP_PAIDAMT, 0) + @Pay,
+                            AP_DUEAMT  = ISNULL(AP_DUEAMT, 0) - @Pay,
+                            AP_PAYMENTMETHOD = @Method,
+                            AP_REFERENCENO   = @Ref
+                        WHERE
+                            AP_ID = @ApId
+
+                            AND ISNULL(AP_CALCEL,0) = 0
+                            AND ISNULL(AP_DUEAMT,0) >= @Pay;";
+
+            try
+            {
+                if (payAmount <= 0m)
+                    return (false, "Pay amount must be greater than 0.");
+
+                await using var con = _db.CreateConnection();
+                await using var cmd = new SqlCommand(sql, con);
+
+                cmd.Parameters.Add("@ApId", SqlDbType.NChar, 10).Value = apId;
+
+                var pPay = cmd.Parameters.Add("@Pay", SqlDbType.Decimal);
+                pPay.Precision = 18; pPay.Scale = 2; pPay.Value = payAmount;
+
+                cmd.Parameters.Add("@Method", SqlDbType.NVarChar, 100).Value =
+                    (object?)paymentMethod ?? DBNull.Value;
+
+                cmd.Parameters.Add("@Ref", SqlDbType.NVarChar, 100).Value =
+                    (object?)referenceNo ?? DBNull.Value;
+
+                await con.OpenAsync();
+                var affected = await cmd.ExecuteNonQueryAsync();
+
+                if (affected == 0)
+                    return (false, "Settle failed: record not found, already processed/cancelled, or pay amount exceeds due.");
+
+                return (true, "Due amount settled successfully.");
+            }
+            catch (Exception ex)
+            {
+                return (false, $"Settle failed: {ex.Message}");
+            }
+        }
+
     }
 }

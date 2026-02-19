@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using LibraryMS.BLL.Models;
 using LibraryMS.BLL.Services;
+using LibraryMS.Win.Pages; // ✅ for FrmSettleDue
 using static LibraryMS.DAL.Repositories.Dtos;
 
 namespace LibraryMS.Win.Pages
@@ -39,6 +40,9 @@ namespace LibraryMS.Win.Pages
 
             btnApprove.Click += async (_, __) => await ApproveSelectedAsync();
             btnReject.Click += async (_, __) => await RejectSelectedAsync();
+
+            // ✅ NEW button
+            btnSettleDue.Click += async (_, __) => await SettleDueSelectedAsync();
         }
 
         private async Task LoadGridAsync()
@@ -62,6 +66,14 @@ namespace LibraryMS.Win.Pages
             if (AppSession.Current == null)
             {
                 MessageBox.Show("Session missing. Please login again.");
+                return;
+            }
+
+            // ✅ OPTIONAL: block approval if due > 0
+            if (Selected.DueAmt > 0m)
+            {
+                MessageBox.Show("Cannot approve until Due Amount is settled.", "Due Pending",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -101,6 +113,37 @@ namespace LibraryMS.Win.Pages
             if (ok != DialogResult.Yes) return;
 
             var (success, message) = await _service.RejectAsync(Selected.ApId, AppSession.Current.UserCode);
+
+            MessageBox.Show(message, success ? "Success" : "Error",
+                MessageBoxButtons.OK,
+                success ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+
+            if (success) await LoadGridAsync();
+        }
+
+        // ✅ NEW: Settle Due Amount
+        private async Task SettleDueSelectedAsync()
+        {
+            if (Selected == null) return;
+
+            if (Selected.DueAmt <= 0m)
+            {
+                MessageBox.Show("This approval has no due amount.", "Info",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using var dlg = new FrmSettleDue(Selected.DueAmt);
+
+            if (dlg.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            var (success, message) = await _service.SettleDueAsync(
+                Selected.ApId,
+                dlg.PayAmount,
+                dlg.PaymentMethod,
+                dlg.ReferenceNo
+            );
 
             MessageBox.Show(message, success ? "Success" : "Error",
                 MessageBoxButtons.OK,

@@ -40,19 +40,21 @@ namespace LibraryMS.Win.Helper
             var menuService = new MenuService(menuRepo);
             var approvalService = new ApprovalService(approvalRepo);
             var groupMenuService = new GroupMenuService(groupMenuRepo);
+            //var groupMenuService = new GroupMenuService(groupMenuRepo);
 
             // NOTE: Your RegistrationService constructor must match this signature
             var regService = new RegistrationService(db, groupRepo, subRepo, locRepo, regRepo, approvalRepo);
 
             var loc = new LocationService(locRepo);
-
+            groupMenuService.EnsureAsync().GetAwaiter().GetResult();
             return new ServiceContainer(
                 Location: loc,
                 Auth: auth,
                 Menu: menuService,
                 Registration: regService,
                 Approval: approvalService,
-                GroupMenus: groupMenuService
+                GroupMenus: groupMenuService,
+                GroupRepo: groupRepo
             );
         }
     }
@@ -63,6 +65,7 @@ namespace LibraryMS.Win.Helper
         MenuService Menu,
         RegistrationService Registration,
         ApprovalService Approval,
-        GroupMenuService GroupMenus
+        GroupMenuService GroupMenus,
+        UserGroupRepository GroupRepo
     );
 }

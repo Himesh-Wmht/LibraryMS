@@ -21,5 +21,10 @@ namespace LibraryMS.BLL.Services
 
         public Task<(bool ok, string message)> RejectAsync(string apId, string rejectedBy)
             => _repo.RejectAsync(apId, rejectedBy);
+        public Task<(bool ok, string message)> SettleDueAsync(string apId,decimal payAmount, string? method,string? referenceNo)
+        {
+            return _repo.SettleDueAsync(apId, payAmount, method, referenceNo);
+        }
+
     }
 }

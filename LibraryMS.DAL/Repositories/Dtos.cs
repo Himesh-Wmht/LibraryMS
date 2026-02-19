@@ -24,7 +24,9 @@ namespace LibraryMS.DAL.Repositories
               string? PaymentMethod,
               string? ReferenceNo,
               string? ApprovedBy,
-              DateTime ApDate
+              DateTime ApDate,
+              bool IsApproved,
+              bool IsRejected 
           );
 
         public sealed record ApprovalInsertDto(

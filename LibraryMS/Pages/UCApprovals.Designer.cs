@@ -20,6 +20,8 @@ namespace LibraryMS.Win.Pages
         private Button btnLoadAll;
         private Button btnApprove;
         private Button btnReject;
+        private Button btnSettleDue;
+
 
         private DataGridView dgvPending;
 
@@ -46,6 +48,9 @@ namespace LibraryMS.Win.Pages
             btnLoadAll = new Button();
             btnApprove = new Button();
             btnReject = new Button();
+            btnSettleDue = new Button();
+
+
 
             dgvPending = new DataGridView();
 
@@ -114,11 +119,13 @@ namespace LibraryMS.Win.Pages
             SetupBtn(btnLoadAll, "Load All", Color.DimGray);
             SetupBtn(btnApprove, "Approve", Color.SeaGreen);
             SetupBtn(btnReject, "Reject", Color.IndianRed);
+            SetupBtn(btnSettleDue, "Settle Due", Color.DarkOrange);
 
             flpActions.Controls.Add(btnRefresh);
             flpActions.Controls.Add(btnLoadAll);
             flpActions.Controls.Add(btnApprove);
             flpActions.Controls.Add(btnReject);
+            flpActions.Controls.Add(btnSettleDue);
 
             tlpHeader.Controls.Add(lblTitle, 0, 0);
             tlpHeader.Controls.Add(flpActions, 1, 0);

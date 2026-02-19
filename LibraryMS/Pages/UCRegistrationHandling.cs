@@ -2,6 +2,7 @@
 using LibraryMS.BLL.Services;
 using LibraryMS.Win.Helper;
 using LibraryMS.Win.Interfaces;
+using static LibraryMS.BLL.Models.UserUpdateModels;
 
 namespace LibraryMS.Win.Pages;
 
@@ -10,9 +11,17 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
     private readonly RegistrationService _service;
     // optional edit toggle
     private bool _editMode = true;
+    private Panel pnlSearch = null!;
+    private TextBox txtSearchUser = null!;
+    private Button btnSearchUser = null!;
+    private ListBox lstSearchResults = null!;
+
+    private bool _isLoadedExistingUser = false;
+    private string? _loadedUserCode = null;
     public UCRegistrationHandling(RegistrationService service)
     {
         InitializeComponent();
+        BuildSearchBar();
         _service = service;
 
         Dock = DockStyle.Fill;
@@ -45,6 +54,185 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
         cmbGroup.SelectedIndexChanged += (_, __) => ApplyGroupRulesUi();
         cmbLocation.SelectedIndexChanged += (_, __) => UpdateAssignedLocationsList();
     }
+    private void BuildSearchBar()
+    {
+        pnlSearch = new Panel
+        {
+            Dock = DockStyle.Top,
+            Height = 60,
+            Padding = new Padding(10),
+            BackColor = Color.FromArgb(255, 246, 220) // light
+        };
+
+        var lbl = new Label
+        {
+            Text = "Search User (Code / Name)",
+            AutoSize = true,
+            ForeColor = Color.Teal,
+            Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold),
+            Location = new Point(10, 8)
+        };
+
+        txtSearchUser = new TextBox
+        {
+            Location = new Point(10, 28),
+            Width = 260
+        };
+
+        btnSearchUser = new Button
+        {
+            Text = "Search",
+            Location = new Point(280, 26),
+            Width = 90,
+            Height = 26
+        };
+
+        lstSearchResults = new ListBox
+        {
+            Location = new Point(10, 58),
+            Width = 415,
+            Height = 120,
+            Visible = false
+        };
+
+        btnSearchUser.Click += async (_, __) => await DoSearchAsync();
+        txtSearchUser.KeyDown += async (_, e) =>
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                await DoSearchAsync();
+            }
+        };
+
+        lstSearchResults.DoubleClick += async (_, __) => await SelectSearchResultAsync();
+
+        pnlSearch.Controls.Add(lbl);
+        pnlSearch.Controls.Add(txtSearchUser);
+        pnlSearch.Controls.Add(btnSearchUser);
+        pnlSearch.Controls.Add(lstSearchResults);
+
+        // panelRoot already contains gbUserRegistration (Dock=Fill)
+        panelRoot.Controls.Add(pnlSearch);
+        panelRoot.Controls.SetChildIndex(pnlSearch, 0); // keep it on top
+    }
+
+    private void ShowSearchResults(bool show)
+    {
+        lstSearchResults.Visible = show;
+        pnlSearch.Height = show ? 190 : 60;
+    }
+
+    private async Task DoSearchAsync()
+    {
+        var q = txtSearchUser.Text.Trim();
+        if (string.IsNullOrWhiteSpace(q))
+        {
+            ShowSearchResults(false);
+            return;
+        }
+
+        var results = await _service.SearchUsersAsync(q);
+
+        lstSearchResults.DataSource = null;
+        lstSearchResults.DataSource = results; // UserSearchItem.ToString shows "CODE - NAME"
+        ShowSearchResults(results.Count > 0);
+    }
+
+    private async Task SelectSearchResultAsync()
+    {
+        if (lstSearchResults.SelectedItem is not UserSearchItem item)
+            return;
+
+        ShowSearchResults(false);
+        txtSearchUser.Clear();
+
+        await LoadExistingUserAsync(item.Code);
+    }
+
+    private async Task LoadExistingUserAsync(string userCode)
+    {
+        var u = await _service.GetUserForEditAsync(userCode);
+        if (u == null)
+        {
+            MessageBox.Show("User not found.");
+            return;
+        }
+
+        // fill UI
+        txtCode.Text = u.Code;
+        txtName.Text = u.Name;
+        txtMobile.Text = u.Mobile;
+        txtEmail.Text = u.Email ?? "";
+        txtNic.Text = u.Nic ?? "";
+        txtAddress.Text = u.Address ?? "";
+        dtpDob.Value = (u.Dob ?? DateTime.Now.Date);
+
+        // group
+        cmbGroup.SelectedValue = u.GroupCode;
+
+        // status
+        rdoActive.Checked = u.Active;
+        rdoInactive.Checked = !u.Active;
+
+        // membership
+        rdoMember.Checked = u.MemberStatus;
+        rdoNonMember.Checked = !u.MemberStatus;
+
+        // subscription
+        rdoSubscribed.Checked = u.SubscriptionStatus;
+        rdoNoSubscription.Checked = !u.SubscriptionStatus;
+
+        if (!string.IsNullOrWhiteSpace(u.SubscriptionId))
+            cmbSubscription.SelectedValue = u.SubscriptionId;
+
+        // gender (if present)
+        if (!string.IsNullOrWhiteSpace(u.Gender) && cmbGender.Items.Contains(u.Gender))
+            cmbGender.SelectedItem = u.Gender;
+
+        nudMaxBorrow.Value = Math.Max(nudMaxBorrow.Minimum, Math.Min(nudMaxBorrow.Maximum, u.MaxBorrow));
+
+        // location selection (your UI supports ALL or one)
+        if (u.AllLocations)
+            SelectLocationCombo("ALL");
+        else if (!string.IsNullOrWhiteSpace(u.LocationCode))
+            SelectLocationCombo(u.LocationCode!);
+
+        UpdateAssignedLocationsList();
+        ApplyGroupRulesUi();
+        ApplySubscriptionUi();
+        UpdateExpireDate();
+
+        // clear password fields (optional update)
+        txtPassword.Clear();
+        txtConfirmPassword.Clear();
+
+        // mark as existing and lock UI
+        _isLoadedExistingUser = true;
+        _loadedUserCode = u.Code;
+
+        _editMode = false;
+        SetInputsEnabled(false);
+        txtCode.ReadOnly = true;
+
+        MessageBox.Show("User loaded. Click EDIT to modify, then SAVE to update.", "Loaded",
+            MessageBoxButtons.OK, MessageBoxIcon.Information);
+    }
+
+    private void SelectLocationCombo(string code)
+    {
+        for (int i = 0; i < cmbLocation.Items.Count; i++)
+        {
+            if (cmbLocation.Items[i] is ComboItem ci && ci.Code.Equals(code, StringComparison.OrdinalIgnoreCase))
+            {
+                cmbLocation.SelectedIndex = i;
+                return;
+            }
+        }
+        // fallback
+        if (cmbLocation.Items.Count > 0) cmbLocation.SelectedIndex = 0;
+    }
+
     private void FixRadioGroups()
     {
         WrapAsGroup(rdoActive, rdoInactive);
@@ -168,7 +356,8 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
     private void SetInputsEnabled(bool enabled)
     {
         // Basic inputs
-        txtCode.ReadOnly = !enabled;
+        //txtCode.ReadOnly = !enabled;
+        txtCode.ReadOnly = _isLoadedExistingUser || !enabled;
         txtName.ReadOnly = !enabled;
         txtMobile.ReadOnly = !enabled;
         txtNic.ReadOnly = !enabled;
@@ -203,6 +392,65 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
         UpdateExpireDate();
         UpdateAssignedLocationsList();
     }
+    private bool ValidateUpdateForm(out string message)
+    {
+        if (string.IsNullOrWhiteSpace(txtCode.Text)) { message = "User Code is required."; return false; }
+        if (string.IsNullOrWhiteSpace(txtName.Text)) { message = "Full Name is required."; return false; }
+        if (string.IsNullOrWhiteSpace(txtMobile.Text)) { message = "Mobile is required."; return false; }
+        if (cmbGroup.SelectedItem is null) { message = "Select User Group."; return false; }
+        if (cmbLocation.SelectedItem is null) { message = "Select Location."; return false; }
+
+        // password optional, but if provided must match confirm
+        if (!string.IsNullOrWhiteSpace(txtPassword.Text) || !string.IsNullOrWhiteSpace(txtConfirmPassword.Text))
+        {
+            if (txtPassword.Text != txtConfirmPassword.Text)
+            {
+                message = "Password and Confirm Password do not match.";
+                return false;
+            }
+        }
+
+        message = "";
+        return true;
+    }
+
+    private UserUpdateRequest BuildUpdateRequest(string groupCode, int maxBorrow)
+    {
+        var loc = (ComboItem)cmbLocation.SelectedItem!;
+        bool allLocs = loc.Code == "ALL";
+
+        SubscriptionItem? sub = null;
+        if (rdoSubscribed.Checked && cmbSubscription.SelectedItem is SubscriptionItem s)
+            sub = s;
+
+        return new UserUpdateRequest
+        {
+            Code = txtCode.Text.Trim(),                 // key
+            Name = txtName.Text.Trim(),
+            Mobile = txtMobile.Text.Trim(),
+            GroupCode = groupCode,
+
+            Active = rdoActive.Checked,
+            MemberStatus = rdoMember.Checked,
+            SubscriptionStatus = rdoSubscribed.Checked,
+
+            SubscriptionId = sub?.Id,
+            SubscriptionDays = sub?.Days,
+
+            Email = txtEmail.Text.Trim(),
+            Nic = txtNic.Text.Trim(),
+            Address = txtAddress.Text.Trim(),
+            Dob = dtpDob.Value.Date,
+            Gender = cmbGender.SelectedItem?.ToString(),
+
+            MaxBorrow = maxBorrow,
+
+            AllLocations = allLocs,
+            LocationCode = allLocs ? null : loc.Code,
+
+            NewPassword = string.IsNullOrWhiteSpace(txtPassword.Text) ? null : txtPassword.Text
+        };
+    }
 
     public async Task OnSaveAsync()
     {
@@ -214,7 +462,24 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
 
         var groupCode = cmbGroup.SelectedValue?.ToString() ?? "";
         int maxBorrow = (int)nudMaxBorrow.Value;
+        if (_isLoadedExistingUser && !string.IsNullOrWhiteSpace(_loadedUserCode))
+        {
+            if (!ValidateUpdateForm(out var msg2))
+            {
+                MessageBox.Show(msg2, "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
 
+            var upd = BuildUpdateRequest(groupCode, maxBorrow);
+            var (ok2, message2) = await _service.UpdateUserAsync(upd);
+
+            MessageBox.Show(message2, ok2 ? "Success" : "Error",
+                MessageBoxButtons.OK,
+                ok2 ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+
+            if (ok2) await OnRefreshAsync(); // clears + resets to insert mode
+            return;
+        }
         // Policy Agreement popup from appsettings.json
         if (!ConfirmPoliciesBeforeSave(groupCode, maxBorrow))
         {
@@ -254,7 +519,7 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
             }
         }
 
-        var (ok, message) = await _service.RegisterAsync(req);
+        var (ok, message) = await _service.RegisterAsync(req, AppSession.Current?.UserCode);
 
         MessageBox.Show(message, ok ? "Success" : "Error",
             MessageBoxButtons.OK,
@@ -453,6 +718,10 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
 
     private void ClearForm()
     {
+        _isLoadedExistingUser = false;
+        _loadedUserCode = null;
+        _editMode = true;
+
         txtCode.Clear();
         txtName.Clear();
         txtMobile.Clear();
@@ -472,6 +741,8 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
         if (cmbLocation.Items.Count > 0) cmbLocation.SelectedIndex = 0;
 
         dtpDob.Value = DateTime.Now.Date;
+        SetInputsEnabled(true);
+        txtCode.ReadOnly = false;
     }
 
     public Task OnProcessAsync()

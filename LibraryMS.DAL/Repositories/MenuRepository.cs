@@ -20,36 +20,36 @@ namespace LibraryMS.DAL.Repositories
         public async Task<List<MenuRow>> GetMenusByGroupAndLocationAsync(string groupCode, string locCode)
         {
             const string sql = @"
-;WITH Allowed AS (
-    SELECT m.M_CODE, m.M_DESC, NULLIF(m.M_PARENT,'') AS M_PARENT, ISNULL(m.M_CHILD,0) AS M_CHILD
-    FROM dbo.U_MENUGROUPS g
-    INNER JOIN dbo.M_TBLMENUS m ON m.M_CODE = g.GP_MENUID
-    WHERE g.GP_ID = @GroupCode
-      AND ISNULL(g.GP_STATUS,0) = 1
-      AND (
-            ISNULL(NULLIF(g.GP_LOCS,''),'ALL') = 'ALL'
-            OR ',' + REPLACE(ISNULL(g.GP_LOCS,''),' ','') + ',' LIKE '%,' + @LocCode + ',%'
-          )
-),
-MenuWithParents AS (
-    SELECT M_CODE, M_DESC, M_PARENT, M_CHILD
-    FROM Allowed
+                                ;WITH Allowed AS (
+                                    SELECT m.M_CODE, m.M_DESC, NULLIF(m.M_PARENT,'') AS M_PARENT, ISNULL(m.M_CHILD,0) AS M_CHILD
+                                    FROM dbo.U_MENUGROUPS g
+                                    INNER JOIN dbo.M_TBLMENUS m ON m.M_CODE = g.GP_MENUID
+                                    WHERE g.GP_ID = @GroupCode
+                                      AND ISNULL(g.GP_STATUS,0) = 1
+                                      AND (
+                                            ISNULL(NULLIF(g.GP_LOCS,''),'ALL') = 'ALL'
+                                            OR ',' + REPLACE(ISNULL(g.GP_LOCS,''),' ','') + ',' LIKE '%,' + @LocCode + ',%'
+                                          )
+                                ),
+                                MenuWithParents AS (
+                                    SELECT M_CODE, M_DESC, M_PARENT, M_CHILD
+                                    FROM Allowed
 
-    UNION ALL
+                                    UNION ALL
 
-    SELECT p.M_CODE, p.M_DESC, NULLIF(p.M_PARENT,''), ISNULL(p.M_CHILD,0)
-    FROM dbo.M_TBLMENUS p
-    INNER JOIN MenuWithParents c ON c.M_PARENT = p.M_CODE
-)
-SELECT
-    M_CODE,
-    MAX(M_DESC) AS M_DESC,
-    M_PARENT,
-    MAX(M_CHILD) AS M_CHILD
-FROM MenuWithParents
-GROUP BY M_CODE, M_PARENT
-ORDER BY ISNULL(M_PARENT,''), M_CODE
-OPTION (MAXRECURSION 100);";
+                                    SELECT p.M_CODE, p.M_DESC, NULLIF(p.M_PARENT,''), ISNULL(p.M_CHILD,0)
+                                    FROM dbo.M_TBLMENUS p
+                                    INNER JOIN MenuWithParents c ON c.M_PARENT = p.M_CODE
+                                )
+                                SELECT
+                                    M_CODE,
+                                    MAX(M_DESC) AS M_DESC,
+                                    M_PARENT,
+                                    MAX(M_CHILD) AS M_CHILD
+                                FROM MenuWithParents
+                                GROUP BY M_CODE, M_PARENT
+                                ORDER BY ISNULL(M_PARENT,''), M_CODE
+                                OPTION (MAXRECURSION 100);";
 
             var list = new List<MenuRow>();
 
@@ -78,9 +78,9 @@ OPTION (MAXRECURSION 100);";
         public async Task<List<MenuRow>> GetAllMenusAsync()
         {
             const string sql = @"
-SELECT M_CODE, M_DESC, NULLIF(M_PARENT,''), ISNULL(M_CHILD,0)
-FROM dbo.M_TBLMENUS
-ORDER BY ISNULL(NULLIF(M_PARENT,''),''), M_CODE;";
+                                SELECT M_CODE, M_DESC, NULLIF(M_PARENT,''), ISNULL(M_CHILD,0)
+                                FROM dbo.M_TBLMENUS
+                                ORDER BY ISNULL(NULLIF(M_PARENT,''),''), M_CODE;";
 
             var list = new List<MenuRow>();
 

@@ -19,7 +19,7 @@ namespace LibraryMS
                 if (login.ShowDialog() != DialogResult.OK)
                     break; // user cancelled login -> exit app
 
-                using var main = new LibraryMS.Win.frmMainWindow(services.Menu, services.Registration, services.Approval, services.GroupMenus);
+                using var main = new LibraryMS.Win.frmMainWindow(services.Menu, services.Registration, services.Approval, services.GroupMenus, services.GroupRepo);
                 // show main as dialog so we can return here on logout
                 var result = main.ShowDialog();
 

@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using FontAwesome.Sharp;
 using LibraryMS.BLL.Models;
 using LibraryMS.BLL.Services;
+using LibraryMS.DAL.Repositories;
 using LibraryMS.Win.Interfaces;
 using LibraryMS.Win.Pages;
 
@@ -18,6 +19,9 @@ namespace LibraryMS.Win
         private readonly RegistrationService _registrationService;
         private readonly ApprovalService _approvalService;
         private readonly GroupMenuService _groupMenuService;
+        private readonly UserGroupRepository _groupRepo;
+
+
 
         // Top actions (we keep references for enabling/disabling if needed)
         private IconButton btnRefresh = null!;
@@ -26,7 +30,7 @@ namespace LibraryMS.Win
         private IconButton btnProcess = null!;
         private IconButton btnLogout = null!;
 
-        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService)
+        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo)
         {
             InitializeComponent();
 
@@ -34,6 +38,7 @@ namespace LibraryMS.Win
             _registrationService = registrationService;
             _approvalService = approvalService ?? throw new ArgumentNullException(nameof(approvalService));
             _groupMenuService = groupMenuService;
+            _groupRepo = groupRepo;
 
             // ---- SplitContainer standard layout ----
             splitContainer1.Dock = DockStyle.Fill;
@@ -71,6 +76,7 @@ namespace LibraryMS.Win
                 await _groupMenuService.EnsureAsync();
                 await LoadMenusAsync();
             };
+            _groupRepo = groupRepo;
         }
 
         // ---------------- TOP BAR ----------------
@@ -276,6 +282,11 @@ namespace LibraryMS.Win
             if (menu.Code == "M00003") // whatever code in DB
             {
                 ShowPage(new UCApprovals(_approvalService));
+                return;
+            }
+            if (menu.Code == "M00008") // whatever code in DB
+            {
+                ShowPage(new UCGroupMenus(_groupMenuService, _groupRepo));
                 return;
             }
 
