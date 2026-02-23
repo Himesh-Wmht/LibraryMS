@@ -30,7 +30,6 @@ namespace LibraryMS.DAL.Repositories
                                   AND ISNULL(NULLIF(x.GP_LOCS,''),'ALL') = 'ALL'
                           );";
 
-            // Force ADMIN/SADM to see "User Privileges" (M00008) for ALL locations
             const string sqlForceUserPrivileges = @"
                                 ;WITH Required (GP_ID, GP_MENUID) AS (
                                     SELECT v.GP_ID, v.GP_MENUID

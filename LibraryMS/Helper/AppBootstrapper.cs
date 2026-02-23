@@ -34,18 +34,28 @@ namespace LibraryMS.Win.Helper
             var regRepo = new UserRegistrationRepository(db);
             var approvalRepo = new ApprovalRepository(db);
             var groupMenuRepo = new GroupMenuRepository(db);
+            var catRepo = new BookCategoryRepository(db);
+            var bookRepo = new BookCatalogRepository(db);
+            var invRepo = new BookInventoryRepository(db);
+            var category = new BookCategoryRepository(db);
 
             // Services (BLL)
             var auth = new AuthService(userRepo);
             var menuService = new MenuService(menuRepo);
             var approvalService = new ApprovalService(approvalRepo);
             var groupMenuService = new GroupMenuService(groupMenuRepo);
-            //var groupMenuService = new GroupMenuService(groupMenuRepo);
+            var bookCategoryService = new BookCategoryService(catRepo);
+            var bookCatalogService = new BookCatalogService(bookRepo, catRepo);
+            var bookInventoryService = new BookInventoryService(invRepo);
+
+
+
 
             // NOTE: Your RegistrationService constructor must match this signature
             var regService = new RegistrationService(db, groupRepo, subRepo, locRepo, regRepo, approvalRepo);
 
             var loc = new LocationService(locRepo);
+
             groupMenuService.EnsureAsync().GetAwaiter().GetResult();
             return new ServiceContainer(
                 Location: loc,
@@ -54,7 +64,10 @@ namespace LibraryMS.Win.Helper
                 Registration: regService,
                 Approval: approvalService,
                 GroupMenus: groupMenuService,
-                GroupRepo: groupRepo
+                GroupRepo: groupRepo,
+                BookCatalog: bookCatalogService,
+                BookInventory: bookInventoryService,
+                BookCategories: bookCategoryService
             );
         }
     }
@@ -66,6 +79,10 @@ namespace LibraryMS.Win.Helper
         RegistrationService Registration,
         ApprovalService Approval,
         GroupMenuService GroupMenus,
-        UserGroupRepository GroupRepo
+        UserGroupRepository GroupRepo,
+        BookCatalogService BookCatalog,
+        BookInventoryService BookInventory,
+        BookCategoryService BookCategories
+
     );
 }

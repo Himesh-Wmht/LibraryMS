@@ -21,9 +21,7 @@ namespace LibraryMS.DAL.Repositories
                                 AP_PAIDAMT, AP_DUEAMT, AP_PAYMENTMETHOD, AP_REFERENCENO, AP_APPROVEDBY, AP_DATE,
                                 CAST(CASE WHEN ISNULL(AP_PROCCESS,0)=1 AND ISNULL(AP_CALCEL,0)=0 THEN 1 ELSE 0 END AS bit) AS IsApproved,
                                 CAST(CASE WHEN ISNULL(AP_PROCCESS,0)=1 AND ISNULL(AP_CALCEL,0)=1 THEN 1 ELSE 0 END AS bit) AS IsRejected
-                            FROM dbo.T_TBLAPPROVAL
-                            WHERE ISNULL(AP_PROCCESS,0)=0 AND ISNULL(AP_CALCEL,0)=0
-                            ORDER BY AP_DATE DESC;";
+                            FROM dbo.T_TBLAPPROVAL WHERE ISNULL(AP_PROCCESS,0)=0 AND ISNULL(AP_CALCEL,0)=0 ORDER BY AP_DATE DESC;";
 
             try
             {
@@ -71,8 +69,7 @@ namespace LibraryMS.DAL.Repositories
                         AP_PAIDAMT, AP_DUEAMT, AP_PAYMENTMETHOD, AP_REFERENCENO, AP_APPROVEDBY, AP_DATE,
                         CAST(CASE WHEN ISNULL(AP_PROCCESS,0)=1 AND ISNULL(AP_CALCEL,0)=0 THEN 1 ELSE 0 END AS bit) AS IsApproved,
                         CAST(CASE WHEN ISNULL(AP_PROCCESS,0)=1 AND ISNULL(AP_CALCEL,0)=1 THEN 1 ELSE 0 END AS bit) AS IsRejected
-                    FROM dbo.T_TBLAPPROVAL
-                    ORDER BY AP_DATE DESC;";
+                    FROM dbo.T_TBLAPPROVAL ORDER BY AP_DATE DESC;";
             try
             {
                 var list = new List<ApprovalRowDto>();
@@ -121,14 +118,9 @@ namespace LibraryMS.DAL.Repositories
                             WHERE AP_ID LIKE 'AP[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]';";
 
             const string sqlInsert = @"
-                        INSERT INTO dbo.T_TBLAPPROVAL
-                        (AP_ID, AP_U_ID, AP_U_UID, AP_NAME, AP_MOBILE, AP_GROUP, AP_SUBSTYPE,
-                         AP_PAIDAMT, AP_DUEAMT, AP_PAYMENTMETHOD, AP_REFERENCENO,
-                         AP_APPROVEDBY, AP_DATE, AP_PROCCESS, AP_CALCEL)
-                        VALUES
-                        (@AP_ID, @AP_U_ID, @AP_U_UID, @AP_NAME, @AP_MOBILE, @AP_GROUP, @AP_SUBSTYPE,
-                         @AP_PAIDAMT, @AP_DUEAMT, @AP_PAYMENTMETHOD, @AP_REFERENCENO,
-                         @AP_APPROVEDBY, @AP_DATE, @AP_PROCCESS, @AP_CALCEL);";
+                        INSERT INTO dbo.T_TBLAPPROVAL (AP_ID, AP_U_ID, AP_U_UID, AP_NAME, AP_MOBILE, AP_GROUP, AP_SUBSTYPE,
+                         AP_PAIDAMT, AP_DUEAMT, AP_PAYMENTMETHOD, AP_REFERENCENO, AP_APPROVEDBY, AP_DATE, AP_PROCCESS, AP_CALCEL)
+                        VALUES (@AP_ID, @AP_U_ID, @AP_U_UID, @AP_NAME, @AP_MOBILE, @AP_GROUP, @AP_SUBSTYPE, @AP_PAIDAMT, @AP_DUEAMT, @AP_PAYMENTMETHOD, @AP_REFERENCENO, @AP_APPROVEDBY, @AP_DATE, @AP_PROCCESS, @AP_CALCEL);";
 
 
             try

@@ -20,6 +20,10 @@ namespace LibraryMS.Win
         private readonly ApprovalService _approvalService;
         private readonly GroupMenuService _groupMenuService;
         private readonly UserGroupRepository _groupRepo;
+        private readonly BookCatalogService _bookCatalogService;
+        private readonly BookInventoryService _bookInventoryService;
+        private readonly BookCategoryService _bookCategoryService;
+
 
 
 
@@ -30,7 +34,7 @@ namespace LibraryMS.Win
         private IconButton btnProcess = null!;
         private IconButton btnLogout = null!;
 
-        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo)
+        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo, BookCatalogService bookCatalogService,BookInventoryService bookInventoryService, BookCategoryService bookCategoryService)
         {
             InitializeComponent();
 
@@ -39,6 +43,11 @@ namespace LibraryMS.Win
             _approvalService = approvalService ?? throw new ArgumentNullException(nameof(approvalService));
             _groupMenuService = groupMenuService;
             _groupRepo = groupRepo;
+            _bookCatalogService = bookCatalogService ?? throw new ArgumentNullException(nameof(bookCatalogService));
+            _bookInventoryService = bookInventoryService ?? throw new ArgumentNullException(nameof(bookInventoryService));
+            _bookCategoryService = bookCategoryService ?? throw new ArgumentNullException(nameof(bookCategoryService));
+
+
 
             // ---- SplitContainer standard layout ----
             splitContainer1.Dock = DockStyle.Fill;
@@ -77,6 +86,7 @@ namespace LibraryMS.Win
                 await LoadMenusAsync();
             };
             _groupRepo = groupRepo;
+            _bookCategoryService = bookCategoryService;
         }
 
         // ---------------- TOP BAR ----------------
@@ -289,6 +299,22 @@ namespace LibraryMS.Win
                 ShowPage(new UCGroupMenus(_groupMenuService, _groupRepo));
                 return;
             }
+            if (menu.Code == "M00005")
+            {
+                ShowPage(new UCBookCatalog(_bookCatalogService));
+                return;
+            }
+            if (menu.Code == "M00006")
+            {
+                ShowPage(new UCBookInventory(_bookInventoryService));
+                return;
+            }
+            if (menu.Code == "M00016") // Book Categories
+            {
+                ShowPage(new UCBookCategory(_bookCategoryService));
+                return;
+            }
+
 
         }
 
@@ -322,6 +348,14 @@ namespace LibraryMS.Win
 
         private async Task RefreshCurrentAsync()
         {
+            // ✅ If a page is open, refresh that page only
+            if (CurrentPage is IPageActions page)
+            {
+                await page.OnRefreshAsync();
+                return;
+            }
+
+            // fallback if nothing loaded
             await LoadMenusAsync();
         }
 

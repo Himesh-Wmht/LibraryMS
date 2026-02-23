@@ -62,5 +62,57 @@ namespace LibraryMS.DAL.Repositories
             bool Assigned,
             string? Locs = null  // optional override; if null -> use current locCode
         );
+        // ----- Book Catalog -----
+        public sealed record BookCategoryDto(string Code, string Name, bool Active);
+        // ✅ NEW: For category grid page
+        public sealed record BookCategoryRowDto(string Code, string Name, bool Active);
+
+        // ✅ NEW: For category save/upsert
+        public sealed record BookCategoryUpsertDto(
+            string Code,
+            string Name,
+            bool Active
+        );
+        public sealed record BookRowDto(
+            string Code,
+            string Title,
+            string? Author,
+            string? Publisher,
+            string? Isbn,
+            string? CategoryCode,
+            string? CategoryName,
+            decimal Price,
+            bool Active
+        );
+
+        public sealed record BookUpsertDto(
+            string Code,
+            string Title,
+            string? Author,
+            string? Publisher,
+            string? Isbn,
+            string? CategoryCode,
+            decimal Price,
+            bool Active
+        );
+
+        // ----- Inventory -----
+        public sealed record InvRowDto(
+            int Id,
+            string BookCode,
+            string Title,
+            string LocCode,
+            int Qty,
+            int Reorder,
+            bool Active
+        );
+
+        public sealed record InvUpsertDto(
+            string BookCode,
+            string LocCode,
+            int Qty,
+            int Reorder,
+            bool Active
+        );
     }
 }
