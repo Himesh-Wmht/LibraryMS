@@ -38,19 +38,19 @@ namespace LibraryMS.Win.Helper
             var bookRepo = new BookCatalogRepository(db);
             var invRepo = new BookInventoryRepository(db);
             var category = new BookCategoryRepository(db);
+            var pwdReqRepo = new PasswordResetRequestRepository(db);
+            var lockRepo = new UserLockApprovalRepository(db);
 
             // Services (BLL)
-            var auth = new AuthService(userRepo);
+            var auth = new AuthService(userRepo, lockRepo);
             var menuService = new MenuService(menuRepo);
             var approvalService = new ApprovalService(approvalRepo);
             var groupMenuService = new GroupMenuService(groupMenuRepo);
             var bookCategoryService = new BookCategoryService(catRepo);
             var bookCatalogService = new BookCatalogService(bookRepo, catRepo);
             var bookInventoryService = new BookInventoryService(invRepo);
-
-
-
-
+            var passwordResetService = new PasswordResetService(pwdReqRepo);
+            var userLockService = new UserLockService(lockRepo);
             // NOTE: Your RegistrationService constructor must match this signature
             var regService = new RegistrationService(db, groupRepo, subRepo, locRepo, regRepo, approvalRepo);
 
@@ -67,7 +67,9 @@ namespace LibraryMS.Win.Helper
                 GroupRepo: groupRepo,
                 BookCatalog: bookCatalogService,
                 BookInventory: bookInventoryService,
-                BookCategories: bookCategoryService
+                BookCategories: bookCategoryService,
+                PasswordReset: passwordResetService,
+                UserLocks: userLockService
             );
         }
     }
@@ -82,7 +84,8 @@ namespace LibraryMS.Win.Helper
         UserGroupRepository GroupRepo,
         BookCatalogService BookCatalog,
         BookInventoryService BookInventory,
-        BookCategoryService BookCategories
-
+        BookCategoryService BookCategories,
+        PasswordResetService PasswordReset,
+        UserLockService UserLocks
     );
 }

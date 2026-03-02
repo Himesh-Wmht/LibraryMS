@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using LibraryMS.BLL.Models;
 using LibraryMS.BLL.Security;
@@ -9,56 +6,85 @@ using LibraryMS.DAL.Repositories;
 
 namespace LibraryMS.BLL.Services
 {
-
     public enum AuthResult
     {
         LoginGranted,
         InvalidId,
         InvalidPassword,
-        InactiveUser
+        InactiveUser,
+        AccountLocked
     }
-    public class AuthService
+
+    public sealed class AuthService
     {
         private readonly UserRepository _users;
+        private readonly UserLockApprovalRepository _locks;
 
-        public AuthService(UserRepository users)
+        public AuthService(UserRepository users, UserLockApprovalRepository locks)
         {
-            _users = users;
+            _users = users ?? throw new ArgumentNullException(nameof(users));
+            _locks = locks ?? throw new ArgumentNullException(nameof(locks));
         }
+
         public async Task<(AuthResult Result, UserSession? Session, string Message)> LoginAsync(string userCode, string password)
         {
+            userCode = (userCode ?? "").Trim();
+            password = password ?? "";
+
             if (string.IsNullOrWhiteSpace(userCode))
                 return (AuthResult.InvalidId, null, "Invalid User ID");
 
-            var u = await _users.GetUserByCodeAsync(userCode.Trim());
-            if (u == null)
+            // ✅ Use your login query that includes fail/locked
+            var login = await _users.GetLoginUserAsync(userCode);
+            if (login == null)
                 return (AuthResult.InvalidId, null, "Invalid User ID");
 
-            if (!u.U_ACTIVE)
+            if (!login.Active)
                 return (AuthResult.InactiveUser, null, "Inactive User");
 
-            // Hashed password path
-            if (PasswordHasher.LooksHashed(u.U_PASSWORD))
+            if (login.Locked)
+                return (AuthResult.AccountLocked, null, "Account locked. Please contact Admin.");
+
+            // ✅ Verify password (hashed OR legacy plaintext)
+            bool ok;
+            string? upgradedHash = null;
+
+            if (PasswordHasher.LooksHashed(login.PasswordStored))
             {
-                if (!PasswordHasher.VerifyPassword(password, u.U_PASSWORD))
-                    return (AuthResult.InvalidPassword, null, "Incorrect Password");
+                ok = PasswordHasher.VerifyPassword(password, login.PasswordStored);
             }
             else
             {
-                // Legacy plaintext fallback (NOT recommended)
-                if (!string.Equals(password, u.U_PASSWORD))
-                    return (AuthResult.InvalidPassword, null, "Incorrect Password");
+                ok = string.Equals(password, login.PasswordStored);
 
-                // Optional: auto-upgrade to hash after successful login
-                var newHash = PasswordHasher.HashPassword(password);
-                await _users.UpdatePasswordAsync(u.U_CODE, newHash);
+                // ✅ Auto-upgrade legacy plaintext to hash on success
+                if (ok)
+                    upgradedHash = PasswordHasher.HashPassword(password);
             }
+
+            if (!ok)
+            {
+                // ✅ increment fail count + lock on 4
+                var (failCount, lockedNow) = await _users.OnLoginFailAsync(userCode);
+
+                if (lockedNow)
+                {
+                    // ✅ create pending unlock request
+                    await _locks.EnsurePendingUnlockRequestAsync(userCode);
+                    return (AuthResult.AccountLocked, null, "Account locked after 4 failed attempts. Contact Admin.");
+                }
+
+                return (AuthResult.InvalidPassword, null, $"Incorrect Password. Attempt {failCount}/4");
+            }
+
+            // ✅ success: reset fail count, unlock, and upgrade password if needed
+            await _users.OnLoginSuccessAsync(userCode, upgradedHash);
 
             var session = new UserSession
             {
-                UserCode = u.U_CODE,
-                UserName = u.U_NAME,
-                GroupCode = u.U_GROUP
+                UserCode = login.UserCode,
+                UserName = login.UserName,
+                GroupCode = login.GroupCode
             };
 
             return (AuthResult.LoginGranted, session, "OK");
@@ -69,4 +95,3 @@ namespace LibraryMS.BLL.Services
             Task.FromResult(PasswordHasher.HashPassword(plain));
     }
 }
-

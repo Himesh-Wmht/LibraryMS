@@ -15,4 +15,5 @@ namespace LibraryMS.BLL.Models
         public string LocationCode { get; set; } = "";
         public string LocationDesc { get; set; } = "";
     }
+    public sealed record LoginUserDb(string UserCode, string UserName, string GroupCode, bool Active, string PasswordStored, int FailCount, bool Locked);
 }

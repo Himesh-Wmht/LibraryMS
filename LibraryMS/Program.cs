@@ -1,3 +1,4 @@
+using LibraryMS.BLL.Services;
 using LibraryMS.Win.Helper;
 
 namespace LibraryMS
@@ -19,7 +20,7 @@ namespace LibraryMS
                 if (login.ShowDialog() != DialogResult.OK)
                     break; // user cancelled login -> exit app
 
-                using var main = new LibraryMS.Win.frmMainWindow(services.Menu, services.Registration, services.Approval, services.GroupMenus, services.GroupRepo, services.BookCatalog, services.BookInventory, services.BookCategories );
+                using var main = new LibraryMS.Win.frmMainWindow(services.Menu, services.Registration, services.Approval, services.GroupMenus, services.GroupRepo, services.BookCatalog, services.BookInventory, services.BookCategories, services.PasswordReset, services.UserLocks);
                 // show main as dialog so we can return here on logout
                 var result = main.ShowDialog();
 

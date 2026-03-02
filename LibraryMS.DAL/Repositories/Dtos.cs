@@ -114,5 +114,20 @@ namespace LibraryMS.DAL.Repositories
             int Reorder,
             bool Active
         );
+        public sealed record PwdResetRowDto(
+            string PrId,
+            string UserCode,
+            string Name,
+            string? Mobile,
+            DateTime ReqDate,
+            string Status,
+            string? RequestedBy
+        );
+        public sealed record UserLockRowDto(
+            string UlId,
+            string UserCode,
+            DateTime LockedAt,
+            string Status
+        );
     }
 }

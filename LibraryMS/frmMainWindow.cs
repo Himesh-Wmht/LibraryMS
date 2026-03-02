@@ -23,9 +23,8 @@ namespace LibraryMS.Win
         private readonly BookCatalogService _bookCatalogService;
         private readonly BookInventoryService _bookInventoryService;
         private readonly BookCategoryService _bookCategoryService;
-
-
-
+        private readonly PasswordResetService _passwordResetService;
+        private readonly UserLockService _userlock;
 
         // Top actions (we keep references for enabling/disabling if needed)
         private IconButton btnRefresh = null!;
@@ -34,7 +33,7 @@ namespace LibraryMS.Win
         private IconButton btnProcess = null!;
         private IconButton btnLogout = null!;
 
-        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo, BookCatalogService bookCatalogService,BookInventoryService bookInventoryService, BookCategoryService bookCategoryService)
+        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo, BookCatalogService bookCatalogService,BookInventoryService bookInventoryService, BookCategoryService bookCategoryService, PasswordResetService passwordResetService, UserLockService userLockService)
         {
             InitializeComponent();
 
@@ -46,7 +45,8 @@ namespace LibraryMS.Win
             _bookCatalogService = bookCatalogService ?? throw new ArgumentNullException(nameof(bookCatalogService));
             _bookInventoryService = bookInventoryService ?? throw new ArgumentNullException(nameof(bookInventoryService));
             _bookCategoryService = bookCategoryService ?? throw new ArgumentNullException(nameof(bookCategoryService));
-
+            _passwordResetService = passwordResetService ?? throw new ArgumentNullException(nameof(passwordResetService));
+            _userlock = userLockService ?? throw new ArgumentNullException(nameof(userLockService));
 
 
             // ---- SplitContainer standard layout ----
@@ -87,6 +87,7 @@ namespace LibraryMS.Win
             };
             _groupRepo = groupRepo;
             _bookCategoryService = bookCategoryService;
+            _passwordResetService = passwordResetService;
         }
 
         // ---------------- TOP BAR ----------------
@@ -314,8 +315,22 @@ namespace LibraryMS.Win
                 ShowPage(new UCBookCategory(_bookCategoryService));
                 return;
             }
+            if (menu.Code == "M00019") // PASSWORD RESET REQUEST
+            {
+                ShowPage(new UCPasswordResetRequest(_passwordResetService));
+                return;
+            }
 
-
+            if (menu.Code == "M00017") // PASSWORD RESET APPROVALS
+            {
+                ShowPage(new UCPasswordResetApprovals(_passwordResetService));
+                return;
+            }
+            if (menu.Code == "M00018")
+            {
+                ShowPage(new UCUserUnlockApprovals(_userlock));
+                return;
+            }
         }
 
         private void ShowPage(Control page)

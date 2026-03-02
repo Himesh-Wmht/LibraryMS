@@ -103,6 +103,51 @@ namespace LibraryMS
         private LocationItem? SelectedLocation =>
             cmbLoginlocs.SelectedItem as LocationItem;
 
+        //private async void button1_Click(object sender, EventArgs e)
+        //{
+        //    var user = txtUserName.Text.Trim();
+        //    var pass = txtPassword.Text;
+
+        //    if (string.IsNullOrWhiteSpace(user) || string.IsNullOrWhiteSpace(pass))
+        //    {
+        //        ShowError("Enter Username and Password.");
+        //        return;
+        //    }
+
+        //    if (SelectedLocation == null || string.IsNullOrWhiteSpace(SelectedLocation.Code))
+        //    {
+        //        ShowError("Select a Location.");
+        //        return;
+        //    }
+
+        //    // 1) Validate user/password (hash verify)
+        //    var (result, session, msg) = await _authService.LoginAsync(user, pass);
+        //    if (result != AuthResult.LoginGranted || session == null)
+        //    {
+        //        ShowError(msg);
+        //        txtPassword.Clear();
+        //        txtPassword.Focus();
+        //        return;
+        //    }
+
+
+        //    // 2) Validate user has permission to login selected location
+        //    bool hasLoc = await _locationService.UserHasLocationAsync(user, SelectedLocation.Code);
+        //    if (!hasLoc)
+        //    {
+        //        ShowError("You do not have permission to login to this location.");
+        //        return;
+        //    }
+
+        //    // 3) Set session + continue
+        //    session.LocationCode = SelectedLocation.Code;
+        //    session.LocationDesc = SelectedLocation.Desc;
+
+        //    AppSession.Current = session;
+
+        //    this.DialogResult = DialogResult.OK;
+        //    this.Close();
+        //}
         private async void button1_Click(object sender, EventArgs e)
         {
             var user = txtUserName.Text.Trim();
@@ -120,35 +165,57 @@ namespace LibraryMS
                 return;
             }
 
-            // 1) Validate user/password (hash verify)
-            var (result, session, msg) = await _authService.LoginAsync(user, pass);
-            if (result != AuthResult.LoginGranted || session == null)
+            // Disable button to prevent double-click while awaiting
+            btnLogin.Enabled = false;
+            try
             {
-                ShowError(msg);
-                txtPassword.Clear();
-                txtPassword.Focus();
-                return;
+                // 1) Validate user/password (includes lock logic)
+                var (result, session, msg) = await _authService.LoginAsync(user, pass);
+
+                if (result != AuthResult.LoginGranted || session == null)
+                {
+                    // Special handling for locked accounts
+                    if (result == AuthResult.AccountLocked)
+                    {
+                        ShowError(msg);              // e.g. "Account locked after 4 failed attempts..."
+                        txtPassword.Clear();
+                        txtUserName.Focus();
+                        return;
+                    }
+
+                    // Normal invalid cases
+                    ShowError(msg);
+                    txtPassword.Clear();
+                    txtPassword.Focus();
+                    return;
+                }
+
+                // 2) Validate user has permission to login selected location
+                bool hasLoc = await _locationService.UserHasLocationAsync(user, SelectedLocation.Code);
+                if (!hasLoc)
+                {
+                    ShowError("You do not have permission to login to this location.");
+                    return;
+                }
+
+                // 3) Set session + continue
+                session.LocationCode = SelectedLocation.Code;
+                session.LocationDesc = SelectedLocation.Desc;
+
+                AppSession.Current = session;
+
+                DialogResult = DialogResult.OK;
+                Close();
             }
-
-
-            // 2) Validate user has permission to login selected location
-            bool hasLoc = await _locationService.UserHasLocationAsync(user, SelectedLocation.Code);
-            if (!hasLoc)
+            catch (Exception ex)
             {
-                ShowError("You do not have permission to login to this location.");
-                return;
+                ShowError(ex.Message);
             }
-
-            // 3) Set session + continue
-            session.LocationCode = SelectedLocation.Code;
-            session.LocationDesc = SelectedLocation.Desc;
-
-            AppSession.Current = session;
-
-            this.DialogResult = DialogResult.OK;
-            this.Close();
+            finally
+            {
+                btnLogin.Enabled = true;
+            }
         }
-
         private void panel2_Paint(object sender, PaintEventArgs e)
         {
 
