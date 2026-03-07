@@ -129,5 +129,71 @@ namespace LibraryMS.DAL.Repositories
             DateTime LockedAt,
             string Status
         );
+        public sealed record LookupItemDto(string Code, string Name, string? Extra = null);
+        public sealed record BookAvailRowDto(
+           string BookCode,
+           string Title,
+           int Qty,
+           int Reserved,
+           int Available
+        );
+
+        public sealed record ResMyRowDto(
+            int ResId,
+            string BookCode,
+            string Title,
+            int Qty,
+            int HoldDays,
+            DateTime ReqDate,
+            string Status,
+            DateTime? ExpiresOn
+        );
+
+        public sealed record ResPendingRowDto(
+            int ResId,
+            string UserCode,
+            string UserName,
+            string BookCode,
+            string Title,
+            string LocCode,
+            int Qty,
+            int HoldDays,
+            DateTime ReqDate,
+            string Status
+        );
+
+        public sealed record ReservationRequestDto(
+            string UserCode,
+            string LocCode,
+            string BookCode,
+            int Qty,
+            int HoldDays,
+            string? Remark
+        );
+        public sealed record TransferLineDto(string BookCode, string Title, int Qty);
+        public sealed record TransferHeaderRowDto(
+            string DocNo,
+            string FromLoc,
+            string ToLoc,
+            string ReqBy,
+            DateTime ReqDate,
+            string Status,
+            string? Remark
+        );
+        public sealed record TransferDetailRowDto(
+            int LineNo,
+            string BookCode,
+            string Title,
+            int Qty
+        );
+
+        public sealed record TransferCreateDto(
+            string FromLoc,
+            string ToLoc,
+            string ReqBy,
+            string? Remark,
+            List<TransferLineDto> Lines
+        );
+
     }
 }

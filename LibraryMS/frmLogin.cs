@@ -203,7 +203,11 @@ namespace LibraryMS
                 session.LocationDesc = SelectedLocation.Desc;
 
                 AppSession.Current = session;
-
+                var pop = await _authService.GetMembershipPopupTextAsync(user);
+                if (!string.IsNullOrWhiteSpace(pop))
+                {
+                    MessageBox.Show(pop, "Membership", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
                 DialogResult = DialogResult.OK;
                 Close();
             }

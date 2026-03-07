@@ -111,7 +111,26 @@ WHERE U_CODE=@U;";
                 r.IsDBNull(4) ? "" : r.GetString(4)
             );
         }
+        public async Task<(DateTime? RegisteredDate, DateTime? ExpiredDate)> GetMembershipDatesAsync(string userCode)
+        {
+            const string sql = @"
+                        SELECT U_REGISTEREDATE, U_EXPIREDDATE
+                        FROM dbo.M_TBLUSERS
+                        WHERE U_CODE=@U;";
 
+            await using var con = _db.CreateConnection();
+            await using var cmd = new SqlCommand(sql, con);
+            cmd.Parameters.Add("@U", SqlDbType.VarChar, 20).Value = userCode;
+
+            await con.OpenAsync();
+            await using var r = await cmd.ExecuteReaderAsync();
+            if (!await r.ReadAsync()) return (null, null);
+
+            DateTime? reg = r.IsDBNull(0) ? null : r.GetDateTime(0);
+            DateTime? exp = r.IsDBNull(1) ? null : r.GetDateTime(1);
+
+            return (reg, exp);
+        }
         public async Task UpdatePasswordAsync(string userCode, string newPasswordHash)
         {
             const string sql = @"

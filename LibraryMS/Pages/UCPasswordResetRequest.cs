@@ -10,7 +10,7 @@ namespace LibraryMS.Win.Pages
     public partial class UCPasswordResetRequest : UserControl
     {
         private readonly PasswordResetService _service;
-
+         
         public UCPasswordResetRequest(PasswordResetService service)
         {
             InitializeComponent();

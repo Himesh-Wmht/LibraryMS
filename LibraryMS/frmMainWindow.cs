@@ -25,6 +25,10 @@ namespace LibraryMS.Win
         private readonly BookCategoryService _bookCategoryService;
         private readonly PasswordResetService _passwordResetService;
         private readonly UserLockService _userlock;
+        private readonly BookReservationService _reservationsService;
+        private readonly UserLookupService _userLookupService;
+        private readonly BookTransferService _booktransfer;
+        private readonly LocationLookupService _locationLookupService;
 
         // Top actions (we keep references for enabling/disabling if needed)
         private IconButton btnRefresh = null!;
@@ -33,7 +37,7 @@ namespace LibraryMS.Win
         private IconButton btnProcess = null!;
         private IconButton btnLogout = null!;
 
-        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo, BookCatalogService bookCatalogService,BookInventoryService bookInventoryService, BookCategoryService bookCategoryService, PasswordResetService passwordResetService, UserLockService userLockService)
+        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo, BookCatalogService bookCatalogService,BookInventoryService bookInventoryService, BookCategoryService bookCategoryService, PasswordResetService passwordResetService, UserLockService userLockService, BookReservationService reservationsService, UserLookupService userLookupService, BookTransferService bookTransfer, LocationLookupService locationLookupService)
         {
             InitializeComponent();
 
@@ -47,7 +51,10 @@ namespace LibraryMS.Win
             _bookCategoryService = bookCategoryService ?? throw new ArgumentNullException(nameof(bookCategoryService));
             _passwordResetService = passwordResetService ?? throw new ArgumentNullException(nameof(passwordResetService));
             _userlock = userLockService ?? throw new ArgumentNullException(nameof(userLockService));
-
+            _reservationsService = reservationsService ?? throw new ArgumentNullException(nameof(reservationsService));
+            _userLookupService = userLookupService ?? throw new ArgumentNullException(nameof(userLookupService));
+            _booktransfer = bookTransfer ?? throw new ArgumentNullException(nameof(bookTransfer));
+            _locationLookupService = locationLookupService ?? throw new ArgumentNullException(nameof(locationLookupService));
 
             // ---- SplitContainer standard layout ----
             splitContainer1.Dock = DockStyle.Fill;
@@ -88,6 +95,7 @@ namespace LibraryMS.Win
             _groupRepo = groupRepo;
             _bookCategoryService = bookCategoryService;
             _passwordResetService = passwordResetService;
+            _locationLookupService = locationLookupService;
         }
 
         // ---------------- TOP BAR ----------------
@@ -331,6 +339,26 @@ namespace LibraryMS.Win
                 ShowPage(new UCUserUnlockApprovals(_userlock));
                 return;
             }
+            if (menu.Code == "M00014")
+            {
+                ShowPage(new UCBookReservationRequest(_reservationsService, _userLookupService));
+                return;
+            }
+            if (menu.Code == "M00013")
+            {
+                ShowPage(new UCReservationApprovals(_reservationsService));
+                return;
+            }
+            if (menu.Code == "M00021")
+            {
+                ShowPage(new UCBookTransferRequest(_booktransfer, _locationLookupService));
+                return;
+            }
+            if (menu.Code == "M00022")
+            {
+                ShowPage(new UCBookTransferApprovals(_booktransfer));
+                return;
+            }
         }
 
         private void ShowPage(Control page)
@@ -373,8 +401,6 @@ namespace LibraryMS.Win
             // fallback if nothing loaded
             await LoadMenusAsync();
         }
-
-        // ---------------- LOGOUT ----------------
 
         private void LogoutToLogin()
         {

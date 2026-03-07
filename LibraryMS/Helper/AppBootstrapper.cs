@@ -40,6 +40,11 @@ namespace LibraryMS.Win.Helper
             var category = new BookCategoryRepository(db);
             var pwdReqRepo = new PasswordResetRequestRepository(db);
             var lockRepo = new UserLockApprovalRepository(db);
+            var resRepo = new BookReservationRepository(db);
+            var userLookupRepo = new UserLookupRepository(db);
+            var transferRepo = new BookTransferRepository(db);
+            var locLookupRepo = new LocationLookupRepository(db);
+
 
             // Services (BLL)
             var auth = new AuthService(userRepo, lockRepo);
@@ -51,10 +56,13 @@ namespace LibraryMS.Win.Helper
             var bookInventoryService = new BookInventoryService(invRepo);
             var passwordResetService = new PasswordResetService(pwdReqRepo);
             var userLockService = new UserLockService(lockRepo);
-            // NOTE: Your RegistrationService constructor must match this signature
+            var resService = new BookReservationService(resRepo);
             var regService = new RegistrationService(db, groupRepo, subRepo, locRepo, regRepo, approvalRepo);
-
+            var userLookupService = new UserLookupService(userLookupRepo);
             var loc = new LocationService(locRepo);
+            var reservationsService = new BookReservationService(resRepo);
+            var transferService = new BookTransferService(transferRepo);
+            var locLookupService = new LocationLookupService(locLookupRepo);
 
             groupMenuService.EnsureAsync().GetAwaiter().GetResult();
             return new ServiceContainer(
@@ -69,7 +77,11 @@ namespace LibraryMS.Win.Helper
                 BookInventory: bookInventoryService,
                 BookCategories: bookCategoryService,
                 PasswordReset: passwordResetService,
-                UserLocks: userLockService
+                UserLocks: userLockService,
+                UserLookup: userLookupService,
+                Reservations: reservationsService,
+                Transfers: transferService,
+                LocationLookup: locLookupService
             );
         }
     }
@@ -86,6 +98,10 @@ namespace LibraryMS.Win.Helper
         BookInventoryService BookInventory,
         BookCategoryService BookCategories,
         PasswordResetService PasswordReset,
-        UserLockService UserLocks
+        UserLockService UserLocks,
+        BookReservationService Reservations,
+        UserLookupService UserLookup,
+        BookTransferService Transfers,
+LocationLookupService LocationLookup
     );
 }

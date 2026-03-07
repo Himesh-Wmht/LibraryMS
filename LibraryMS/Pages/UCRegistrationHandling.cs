@@ -1,4 +1,5 @@
-﻿using LibraryMS.BLL.Models;
+﻿using System.Text.RegularExpressions;
+using LibraryMS.BLL.Models;
 using LibraryMS.BLL.Services;
 using LibraryMS.Win.Helper;
 using LibraryMS.Win.Interfaces;
@@ -400,7 +401,23 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
         if (cmbGroup.SelectedItem is null) { message = "Select User Group."; return false; }
         if (cmbLocation.SelectedItem is null) { message = "Select Location."; return false; }
 
-        // password optional, but if provided must match confirm
+        // ✅ MOBILE normalize + validate
+        var normalized = NormalizeMobile(txtMobile.Text);
+        if (!IsValidSriLankaMobile94(normalized))
+        {
+            message = "Mobile must be valid. Example: 0771234567 or 94771234567";
+            return false;
+        }
+        txtMobile.Text = normalized;
+
+        // ✅ EMAIL validate (optional)
+        if (!IsValidEmail(txtEmail.Text))
+        {
+            message = "Invalid email address.";
+            return false;
+        }
+
+        // password optional in update, but if provided must match confirm
         if (!string.IsNullOrWhiteSpace(txtPassword.Text) || !string.IsNullOrWhiteSpace(txtConfirmPassword.Text))
         {
             if (txtPassword.Text != txtConfirmPassword.Text)
@@ -423,7 +440,7 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
         if (rdoSubscribed.Checked && cmbSubscription.SelectedItem is SubscriptionItem s)
             sub = s;
 
-        return new UserUpdateRequest
+        return new UserUpdateRequest 
         {
             Code = txtCode.Text.Trim(),                 // key
             Name = txtName.Text.Trim(),
@@ -662,6 +679,25 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
         if (string.IsNullOrWhiteSpace(txtName.Text)) { message = "Full Name is required."; return false; }
         if (string.IsNullOrWhiteSpace(txtMobile.Text)) { message = "Mobile is required."; return false; }
 
+
+        // ✅ MOBILE normalize + validate
+        var normalized = NormalizeMobile(txtMobile.Text);
+        if (!IsValidSriLankaMobile94(normalized))
+        {
+            message = "Mobile must be a valid Sri Lanka number. Example: 0771234567 or 94771234567";
+            return false;
+        }
+
+        // set normalized value back to UI (94xxxxxxxxx)
+        txtMobile.Text = normalized;
+
+        // ✅ EMAIL validate (optional field)
+        if (!IsValidEmail(txtEmail.Text))
+        {
+            message = "Invalid email address.";
+            return false;
+        }
+
         if (string.IsNullOrWhiteSpace(txtPassword.Text)) { message = "Password is required."; return false; }
         if (txtPassword.Text != txtConfirmPassword.Text) { message = "Password and Confirm Password do not match."; return false; }
 
@@ -749,7 +785,47 @@ public partial class UCRegistrationHandling : UserControl, IPageActions
     {
         throw new NotImplementedException();
     }
+    private static string NormalizeMobile(string? raw)
+{
+    var s = (raw ?? "").Trim();
 
+    // keep digits only
+    s = Regex.Replace(s, @"\D", "");
+
+    // cases:
+    // 0XXXXXXXXX  -> 94XXXXXXXXX
+    // 94XXXXXXXXX -> 94XXXXXXXXX
+    // XXXXXXXXX   -> 94XXXXXXXXX  (if 9 digits and starts without 0)
+    // XXXXXXXXXX  -> 94XXXXXXXXX  (if 10 digits without 0)
+    if (s.StartsWith("0") && s.Length == 10)
+        s = "94" + s.Substring(1);
+    else if (s.StartsWith("94") && s.Length == 11)
+        return s;
+    else if (s.Length == 9) // some users type 9 digits without leading 0
+        s = "94" + s;
+    else if (s.Length == 10 && !s.StartsWith("0")) // typed 10 digits without 0
+        s = "94" + s.Substring(1);
+
+    return s;
+}
+
+private static bool IsValidSriLankaMobile94(string mobile94)
+{
+    // Must be 94 + 9 digits => total 11 digits
+    // e.g. 94771234567
+    return Regex.IsMatch(mobile94, @"^94\d{9}$");
+}
+
+private static bool IsValidEmail(string? email)
+{
+    if (string.IsNullOrWhiteSpace(email)) return true; // optional
+    email = email.Trim();
+
+    // Simple, safe regex (good enough for app validation)
+    return Regex.IsMatch(email,
+        @"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$",
+        RegexOptions.IgnoreCase);
+}
     private sealed class ComboItem
     {
         public string Code { get; }

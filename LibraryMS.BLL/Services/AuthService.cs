@@ -25,7 +25,22 @@ namespace LibraryMS.BLL.Services
             _users = users ?? throw new ArgumentNullException(nameof(users));
             _locks = locks ?? throw new ArgumentNullException(nameof(locks));
         }
+        public async Task<string?> GetMembershipPopupTextAsync(string userCode)
+        {
+            var (reg, exp) = await _users.GetMembershipDatesAsync(userCode);
 
+            // If expiry not set, you can skip popup or show info
+            if (exp == null)
+                return null; // or: return "Membership expiry date is not set.";
+
+            var today = DateTime.Today;
+            var days = (exp.Value.Date - today).Days;
+
+            if (days < 0)
+                return $"Membership EXPIRED on {exp:yyyy-MM-dd} ({Math.Abs(days)} day(s) ago). Please renew.";
+
+            return $"Membership expires on {exp:yyyy-MM-dd}. Remaining: {days} day(s).";
+        }
         public async Task<(AuthResult Result, UserSession? Session, string Message)> LoginAsync(string userCode, string password)
         {
             userCode = (userCode ?? "").Trim();
