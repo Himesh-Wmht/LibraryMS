@@ -29,7 +29,10 @@ namespace LibraryMS.Win
         private readonly UserLookupService _userLookupService;
         private readonly BookTransferService _booktransfer;
         private readonly LocationLookupService _locationLookupService;
-
+        private readonly BookBorrowService _bookBorrowService;
+        private readonly BookReturnService _bookReturnService;
+        private readonly FineCollectionService _fineCollectionService;
+       
         // Top actions (we keep references for enabling/disabling if needed)
         private IconButton btnRefresh = null!;
         private IconButton btnEdit = null!;
@@ -37,7 +40,8 @@ namespace LibraryMS.Win
         private IconButton btnProcess = null!;
         private IconButton btnLogout = null!;
 
-        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo, BookCatalogService bookCatalogService,BookInventoryService bookInventoryService, BookCategoryService bookCategoryService, PasswordResetService passwordResetService, UserLockService userLockService, BookReservationService reservationsService, UserLookupService userLookupService, BookTransferService bookTransfer, LocationLookupService locationLookupService)
+        public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo, BookCatalogService bookCatalogService,BookInventoryService bookInventoryService, BookCategoryService bookCategoryService, PasswordResetService passwordResetService, UserLockService userLockService, BookReservationService reservationsService, UserLookupService userLookupService, BookTransferService bookTransfer, LocationLookupService locationLookupService, BookBorrowService bookBorrowService,
+BookReturnService bookReturnService, FineCollectionService fineCollectionService)
         {
             InitializeComponent();
 
@@ -55,7 +59,10 @@ namespace LibraryMS.Win
             _userLookupService = userLookupService ?? throw new ArgumentNullException(nameof(userLookupService));
             _booktransfer = bookTransfer ?? throw new ArgumentNullException(nameof(bookTransfer));
             _locationLookupService = locationLookupService ?? throw new ArgumentNullException(nameof(locationLookupService));
-
+            _bookBorrowService = bookBorrowService ?? throw new ArgumentNullException(nameof(bookBorrowService));
+            _bookReturnService = bookReturnService ?? throw new ArgumentNullException(nameof(bookReturnService));
+            _fineCollectionService = fineCollectionService ?? throw new ArgumentNullException(nameof(fineCollectionService));
+          
             // ---- SplitContainer standard layout ----
             splitContainer1.Dock = DockStyle.Fill;
             splitContainer1.Orientation = Orientation.Vertical;
@@ -357,6 +364,21 @@ namespace LibraryMS.Win
             if (menu.Code == "M00022")
             {
                 ShowPage(new UCBookTransferApprovals(_booktransfer));
+                return;
+            }
+            if (menu.Code == "M00023")
+            {
+                ShowPage(new UCBookBorrow(_bookBorrowService, _reservationsService, _userLookupService));
+                return;
+            }
+            if (menu.Code == "M00024")
+            {
+                ShowPage(new UCBookReturn(_bookBorrowService, _bookReturnService));
+                return;
+            }
+            if (menu.Code == "M00025")
+            {
+                ShowPage(new UCFineCollection(_fineCollectionService));
                 return;
             }
         }

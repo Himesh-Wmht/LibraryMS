@@ -94,7 +94,41 @@ ORDER BY r.BR_REQ_DATE DESC;";
             }
             return list;
         }
+        public async Task<List<ResMyRowDto>> GetActiveByUserAsync(string userCode, string locCode)
+        {
+            const string sql = @"
+SELECT r.BR_ID, r.BR_BOOKCODE, b.B_TITLE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS, r.BR_EXPIRES_ON
+FROM dbo.T_TBLBOOKRESERVATIONS r
+JOIN dbo.M_TBLBOOKS b ON b.B_CODE = r.BR_BOOKCODE
+WHERE r.BR_USERCODE = @U
+  AND r.BR_LOCCODE = @L
+  AND r.BR_STATUS = 'A'
+  AND r.BR_EXPIRES_ON >= CONVERT(date, SYSDATETIME())
+ORDER BY r.BR_REQ_DATE DESC;";
 
+            var list = new List<ResMyRowDto>();
+            await using var con = _db.CreateConnection();
+            await using var cmd = new SqlCommand(sql, con);
+            cmd.Parameters.Add("@U", SqlDbType.VarChar, 20).Value = userCode;
+            cmd.Parameters.Add("@L", SqlDbType.VarChar, 20).Value = locCode;
+
+            await con.OpenAsync();
+            await using var r = await cmd.ExecuteReaderAsync();
+            while (await r.ReadAsync())
+            {
+                list.Add(new ResMyRowDto(
+                    ResId: r.GetInt32(0),
+                    BookCode: r.GetString(1),
+                    Title: r.GetString(2),
+                    Qty: r.GetInt32(3),
+                    HoldDays: r.GetInt32(4),
+                    ReqDate: r.GetDateTime(5),
+                    Status: r.GetString(6),
+                    ExpiresOn: r.IsDBNull(7) ? null : r.GetDateTime(7)
+                ));
+            }
+            return list;
+        }
         // Create request = Pending approval
         public async Task CreateRequestAsync(ReservationRequestDto dto)
         {

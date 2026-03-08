@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using LibraryMS.DAL.Repositories;
 using static LibraryMS.DAL.Repositories.Dtos;
 
+
 namespace LibraryMS.BLL.Services
 {
     public sealed class BookReservationService
@@ -39,6 +40,9 @@ namespace LibraryMS.BLL.Services
 
         public Task<int> CancelByAdminAsync(int resId, string adminUserCode, string? remark)
             => _repo.CancelByAdminAsync(resId, adminUserCode, remark);
+
+        public Task<List<ResMyRowDto>> GetActiveByUserAsync(string userCode, string locCode)
+    => _repo.GetActiveByUserAsync(userCode, locCode);
 
     }
 }

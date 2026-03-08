@@ -1,9 +1,11 @@
 ﻿using System;
 using System.IO;
+using LibraryMS.BLL.Models;
 using LibraryMS.BLL.Services;
 using LibraryMS.DAL.Core;
 using LibraryMS.DAL.Repositories;
 using Microsoft.Extensions.Configuration;
+using static LibraryMS.BLL.Models.Transaction;
 
 namespace LibraryMS.Win.Helper
 {
@@ -18,6 +20,8 @@ namespace LibraryMS.Win.Helper
             var config = new ConfigurationBuilder()
                 .AddJsonFile(path, optional: false)
                 .Build();
+            var rules = new LibraryRulesOptions();
+            config.GetSection("LibraryRules").Bind(rules);
 
             var cs = config.GetConnectionString("DefaultConnection")
                      ?? throw new Exception("Missing DefaultConnection in appsettings.json");
@@ -44,7 +48,9 @@ namespace LibraryMS.Win.Helper
             var userLookupRepo = new UserLookupRepository(db);
             var transferRepo = new BookTransferRepository(db);
             var locLookupRepo = new LocationLookupRepository(db);
-
+            var borrowRepo = new BookBorrowRepository(db);
+            var returnRepo = new BookReturnRepository(db);
+            var fineRepo = new FineCollectionRepository(db);
 
             // Services (BLL)
             var auth = new AuthService(userRepo, lockRepo);
@@ -63,6 +69,10 @@ namespace LibraryMS.Win.Helper
             var reservationsService = new BookReservationService(resRepo);
             var transferService = new BookTransferService(transferRepo);
             var locLookupService = new LocationLookupService(locLookupRepo);
+            var fineCalculator = new FineCalculatorService(rules);
+            var borrowService = new BookBorrowService(borrowRepo);
+            var returnService = new BookReturnService(returnRepo, fineCalculator);
+            var fineService = new FineCollectionService(fineRepo);
 
             groupMenuService.EnsureAsync().GetAwaiter().GetResult();
             return new ServiceContainer(
@@ -81,7 +91,10 @@ namespace LibraryMS.Win.Helper
                 UserLookup: userLookupService,
                 Reservations: reservationsService,
                 Transfers: transferService,
-                LocationLookup: locLookupService
+                LocationLookup: locLookupService,
+                Borrows: borrowService,
+                Returns: returnService,
+                Fines: fineService
             );
         }
     }
@@ -102,6 +115,9 @@ namespace LibraryMS.Win.Helper
         BookReservationService Reservations,
         UserLookupService UserLookup,
         BookTransferService Transfers,
-LocationLookupService LocationLookup
+        LocationLookupService LocationLookup,
+        BookBorrowService Borrows,
+        BookReturnService Returns,
+        FineCollectionService Fines
     );
 }

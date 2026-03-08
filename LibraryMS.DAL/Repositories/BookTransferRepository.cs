@@ -317,143 +317,143 @@ ORDER BY d.TD_LINENO;";
         public async Task ApproveAsync(string docNo, string approvedBy)
         {
             const string sql = @"
-BEGIN TRY
-    BEGIN TRAN;
+                        BEGIN TRY
+                            BEGIN TRAN;
 
-    DECLARE @FROM varchar(20),
-            @TO   varchar(20);
+                            DECLARE @FROM varchar(20),
+                                    @TO   varchar(20);
 
-    SELECT
-        @FROM = TH_FROM_LOC,
-        @TO   = TH_TO_LOC
-    FROM dbo.T_TBLBOOKTRANSFER_H WITH (UPDLOCK, HOLDLOCK)
-    WHERE TH_DOCNO = @D
-      AND TH_STATUS = 'P';
+                            SELECT
+                                @FROM = TH_FROM_LOC,
+                                @TO   = TH_TO_LOC
+                            FROM dbo.T_TBLBOOKTRANSFER_H WITH (UPDLOCK, HOLDLOCK)
+                            WHERE TH_DOCNO = @D
+                              AND TH_STATUS = 'P';
 
-    IF @FROM IS NULL OR @TO IS NULL
-    BEGIN
-        RAISERROR('Transfer not pending.', 16, 1);
-        ROLLBACK TRAN;
-        RETURN;
-    END
+                            IF @FROM IS NULL OR @TO IS NULL
+                            BEGIN
+                                RAISERROR('Transfer not pending.', 16, 1);
+                                ROLLBACK TRAN;
+                                RETURN;
+                            END
 
-    DECLARE cur CURSOR LOCAL FAST_FORWARD FOR
-    SELECT TD_BOOKCODE, TD_QTY
-    FROM dbo.T_TBLBOOKTRANSFER_D
-    WHERE TD_DOCNO = @D
-    ORDER BY TD_LINENO;
+                            DECLARE cur CURSOR LOCAL FAST_FORWARD FOR
+                            SELECT TD_BOOKCODE, TD_QTY
+                            FROM dbo.T_TBLBOOKTRANSFER_D
+                            WHERE TD_DOCNO = @D
+                            ORDER BY TD_LINENO;
 
-    DECLARE @B varchar(20),
-            @Q int,
-            @OnHand int,
-            @Reserved int,
-            @Available int,
-            @Msg nvarchar(4000);
+                            DECLARE @B varchar(20),
+                                    @Q int,
+                                    @OnHand int,
+                                    @Reserved int,
+                                    @Available int,
+                                    @Msg nvarchar(4000);
 
-    OPEN cur;
-    FETCH NEXT FROM cur INTO @B, @Q;
+                            OPEN cur;
+                            FETCH NEXT FROM cur INTO @B, @Q;
 
-    WHILE @@FETCH_STATUS = 0
-    BEGIN
-        -- Source on-hand
-        SELECT @OnHand = ISNULL(BI_QTY, 0)
-        FROM dbo.T_TBLBOOKINVENTORY WITH (UPDLOCK, HOLDLOCK)
-        WHERE BI_BOOKCODE = @B
-          AND BI_LOCCODE = @FROM
-          AND ISNULL(BI_ACTIVE, 0) = 1;
+                            WHILE @@FETCH_STATUS = 0
+                            BEGIN
+                                -- Source on-hand
+                                SELECT @OnHand = ISNULL(BI_QTY, 0)
+                                FROM dbo.T_TBLBOOKINVENTORY WITH (UPDLOCK, HOLDLOCK)
+                                WHERE BI_BOOKCODE = @B
+                                  AND BI_LOCCODE = @FROM
+                                  AND ISNULL(BI_ACTIVE, 0) = 1;
 
-        IF @OnHand IS NULL
-        BEGIN
-            SET @Msg = N'Source inventory not found for book ' + ISNULL(@B, '');
-            RAISERROR(@Msg, 16, 1);
-            CLOSE cur;
-            DEALLOCATE cur;
-            ROLLBACK TRAN;
-            RETURN;
-        END
+                                IF @OnHand IS NULL
+                                BEGIN
+                                    SET @Msg = N'Source inventory not found for book ' + ISNULL(@B, '');
+                                    RAISERROR(@Msg, 16, 1);
+                                    CLOSE cur;
+                                    DEALLOCATE cur;
+                                    ROLLBACK TRAN;
+                                    RETURN;
+                                END
 
-        -- Active reservations at source
-        SELECT @Reserved = ISNULL(SUM(BR_QTY), 0)
-        FROM dbo.T_TBLBOOKRESERVATIONS
-        WHERE BR_BOOKCODE = @B
-          AND BR_LOCCODE = @FROM
-          AND BR_STATUS = 'A'
-          AND BR_EXPIRES_ON >= CONVERT(date, SYSDATETIME());
+                                -- Active reservations at source
+                                SELECT @Reserved = ISNULL(SUM(BR_QTY), 0)
+                                FROM dbo.T_TBLBOOKRESERVATIONS
+                                WHERE BR_BOOKCODE = @B
+                                  AND BR_LOCCODE = @FROM
+                                  AND BR_STATUS = 'A'
+                                  AND BR_EXPIRES_ON >= CONVERT(date, SYSDATETIME());
 
-        SET @Available = ISNULL(@OnHand, 0) - ISNULL(@Reserved, 0);
+                                SET @Available = ISNULL(@OnHand, 0) - ISNULL(@Reserved, 0);
 
-        IF @Available < @Q
-        BEGIN
-            SET @Msg = N'Insufficient available qty for book ' + ISNULL(@B, '')
-                     + N'. Available: ' + CAST(ISNULL(@Available, 0) AS nvarchar(20))
-                     + N', Requested: ' + CAST(ISNULL(@Q, 0) AS nvarchar(20));
-            RAISERROR(@Msg, 16, 1);
-            CLOSE cur;
-            DEALLOCATE cur;
-            ROLLBACK TRAN;
-            RETURN;
-        END
+                                IF @Available < @Q
+                                BEGIN
+                                    SET @Msg = N'Insufficient available qty for book ' + ISNULL(@B, '')
+                                             + N'. Available: ' + CAST(ISNULL(@Available, 0) AS nvarchar(20))
+                                             + N', Requested: ' + CAST(ISNULL(@Q, 0) AS nvarchar(20));
+                                    RAISERROR(@Msg, 16, 1);
+                                    CLOSE cur;
+                                    DEALLOCATE cur;
+                                    ROLLBACK TRAN;
+                                    RETURN;
+                                END
 
-        -- 1) Deduct from source
-        UPDATE dbo.T_TBLBOOKINVENTORY
-        SET BI_QTY = ISNULL(BI_QTY, 0) - @Q,
-            M_DATE = SYSDATETIME()
-        WHERE BI_BOOKCODE = @B
-          AND BI_LOCCODE = @FROM
-          AND ISNULL(BI_ACTIVE, 0) = 1;
+                                -- 1) Deduct from source
+                                UPDATE dbo.T_TBLBOOKINVENTORY
+                                SET BI_QTY = ISNULL(BI_QTY, 0) - @Q,
+                                    M_DATE = SYSDATETIME()
+                                WHERE BI_BOOKCODE = @B
+                                  AND BI_LOCCODE = @FROM
+                                  AND ISNULL(BI_ACTIVE, 0) = 1;
 
-        -- 2) Add to destination
-        IF EXISTS
-        (
-            SELECT 1
-            FROM dbo.T_TBLBOOKINVENTORY
-            WHERE BI_BOOKCODE = @B
-              AND BI_LOCCODE = @TO
-        )
-        BEGIN
-            UPDATE dbo.T_TBLBOOKINVENTORY
-            SET BI_QTY = ISNULL(BI_QTY, 0) + @Q,
-                BI_ACTIVE = 1,
-                M_DATE = SYSDATETIME()
-            WHERE BI_BOOKCODE = @B
-              AND BI_LOCCODE = @TO;
-        END
-        ELSE
-        BEGIN
-            INSERT INTO dbo.T_TBLBOOKINVENTORY
-            (BI_BOOKCODE, BI_LOCCODE, BI_QTY, BI_REORDER, BI_ACTIVE, M_DATE)
-            VALUES
-            (@B, @TO, @Q, 0, 1, SYSDATETIME());
-        END
+                                -- 2) Add to destination
+                                IF EXISTS
+                                (
+                                    SELECT 1
+                                    FROM dbo.T_TBLBOOKINVENTORY
+                                    WHERE BI_BOOKCODE = @B
+                                      AND BI_LOCCODE = @TO
+                                )
+                                BEGIN
+                                    UPDATE dbo.T_TBLBOOKINVENTORY
+                                    SET BI_QTY = ISNULL(BI_QTY, 0) + @Q,
+                                        BI_ACTIVE = 1,
+                                        M_DATE = SYSDATETIME()
+                                    WHERE BI_BOOKCODE = @B
+                                      AND BI_LOCCODE = @TO;
+                                END
+                                ELSE
+                                BEGIN
+                                    INSERT INTO dbo.T_TBLBOOKINVENTORY
+                                    (BI_BOOKCODE, BI_LOCCODE, BI_QTY, BI_REORDER, BI_ACTIVE, M_DATE)
+                                    VALUES
+                                    (@B, @TO, @Q, 0, 1, SYSDATETIME());
+                                END
 
-        FETCH NEXT FROM cur INTO @B, @Q;
-    END
+                                FETCH NEXT FROM cur INTO @B, @Q;
+                            END
 
-    CLOSE cur;
-    DEALLOCATE cur;
+                            CLOSE cur;
+                            DEALLOCATE cur;
 
-    UPDATE dbo.T_TBLBOOKTRANSFER_H
-    SET TH_STATUS   = 'A',
-        TH_APP_BY   = @U,
-        TH_APP_DATE = SYSDATETIME(),
-        M_DATE      = SYSDATETIME()
-    WHERE TH_DOCNO = @D
-      AND TH_STATUS = 'P';
+                            UPDATE dbo.T_TBLBOOKTRANSFER_H
+                            SET TH_STATUS   = 'A',
+                                TH_APP_BY   = @U,
+                                TH_APP_DATE = SYSDATETIME(),
+                                M_DATE      = SYSDATETIME()
+                            WHERE TH_DOCNO = @D
+                              AND TH_STATUS = 'P';
 
-    COMMIT TRAN;
-END TRY
-BEGIN CATCH
-    IF CURSOR_STATUS('local', 'cur') >= -1
-    BEGIN
-        CLOSE cur;
-        DEALLOCATE cur;
-    END
+                            COMMIT TRAN;
+                        END TRY
+                        BEGIN CATCH
+                            IF CURSOR_STATUS('local', 'cur') >= -1
+                            BEGIN
+                                CLOSE cur;
+                                DEALLOCATE cur;
+                            END
 
-    IF @@TRANCOUNT > 0
-        ROLLBACK TRAN;
+                            IF @@TRANCOUNT > 0
+                                ROLLBACK TRAN;
 
-    THROW;
-END CATCH;";
+                            THROW;
+                        END CATCH;";
 
             await using var con = _db.CreateConnection();
             await using var cmd = new SqlCommand(sql, con);

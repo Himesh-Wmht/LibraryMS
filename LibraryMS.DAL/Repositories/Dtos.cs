@@ -194,6 +194,114 @@ namespace LibraryMS.DAL.Repositories
             string? Remark,
             List<TransferLineDto> Lines
         );
+        public sealed record BorrowLineDto(
+    string BookCode,
+    string Title,
+    int Qty,
+    DateTime DueDate,
+    int? ReservationId
+);
 
+        public sealed record BorrowCreateDto(
+            string MemberCode,
+            string LocCode,
+            string BorrowedBy,
+            string? Remark,
+            List<BorrowLineDto> Lines
+        );
+
+        public sealed record BorrowOpenRowDto(
+            string DocNo,
+            string MemberCode,
+            string MemberName,
+            string LocCode,
+            DateTime BorrowDate,
+            string Status
+        );
+
+        public sealed record BorrowOpenDetailRowDto(
+            int LineNo,
+            string BookCode,
+            string Title,
+            int Qty,
+            int ReturnedQty,
+            int OutstandingQty,
+            DateTime DueDate,
+            decimal ReplacementCost,
+            int? ReservationId
+        );
+
+        public sealed record ReturnLineDto(
+            int BorrowLineNo,
+            string BookCode,
+            int Qty,
+            string Condition,
+            string? Remark
+        );
+
+        public sealed record ReturnCreateDto(
+            string BorrowDocNo,
+            string MemberCode,
+            string LocCode,
+            string ReturnedBy,
+            string? Remark,
+            List<ReturnLineDto> Lines
+        );
+
+        public sealed record FineLineDto(
+            string FineType,
+            string? BookCode,
+            int Qty,
+            decimal Rate,
+            decimal Amount,
+            string? Remark
+        );
+
+        public sealed record ReturnProcessResultDto(
+            string ReturnDocNo,
+            string? FineDocNo,
+            decimal FineTotal
+        );
+
+        public sealed record MemberFineRowDto(
+            string FineDocNo,
+            string MemberCode,
+            string RefType,
+            string RefDocNo,
+            DateTime FineDate,
+            decimal Total,
+            decimal Paid,
+            decimal Balance,
+            string Status,
+            string? Remark
+        );
+
+        public sealed record FinePaymentDto(
+            string FineDocNo,
+            DateTime PayDate,
+            string PayMode,
+            decimal Amount,
+            string? RefNo,
+            string ReceivedBy,
+            string? Remark
+        );
+
+        public sealed record FineRefundDto(
+            string FineDocNo,
+            DateTime RefundDate,
+            decimal Amount,
+            string Mode,
+            string Reason,
+            string ApprovedBy,
+            string? Remark
+        );
+        public sealed record FineDetailRowDto(
+            string FineType,
+            string? BookCode,
+            int Qty,
+            decimal Rate,
+            decimal Amount,
+            string? Remark
+        );
     }
 }
