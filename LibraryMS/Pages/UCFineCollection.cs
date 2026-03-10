@@ -251,6 +251,170 @@ L = Lost";
             btnClearForm.Click += (_, __) => ClearEntry();
         }
 
+        //private void BuildUi()
+        //{
+        //    BackColor = Color.PapayaWhip;
+
+        //    cmbPayMode.Items.AddRange(new object[] { "CASH", "CARD", "ONLINE" });
+        //    cmbPayMode.SelectedIndex = 0;
+
+        //    var gb = new GroupBox
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        Padding = new Padding(10),
+        //        Text = "Fine Collection"
+        //    };
+        //    Controls.Add(gb);
+
+        //    var root = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        RowCount = 2
+        //    };
+        //    root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        //    root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        //    gb.Controls.Add(root);
+
+        //    var header = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        ColumnCount = 2,
+        //        Padding = new Padding(6, 10, 6, 0)
+        //    };
+        //    header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        //    header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+        //    lblTitle.Dock = DockStyle.Fill;
+        //    lblTitle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+        //    lblTitle.ForeColor = Color.Teal;
+        //    lblTitle.TextAlign = ContentAlignment.MiddleLeft;
+
+        //    var flp = new FlowLayoutPanel
+        //    {
+        //        AutoSize = true,
+        //        WrapContents = false,
+        //        Dock = DockStyle.Fill,
+        //        Margin = new Padding(0)
+        //    };
+
+        //    flp.Controls.Add(new Label
+        //    {
+        //        Text = "Fine Search:",
+        //        AutoSize = true,
+        //        Padding = new Padding(0, 7, 0, 0)
+        //    });
+
+        //    flp.Controls.Add(txtSearch);
+
+        //    SetupBtn(btnSearch, "Search", Color.SteelBlue);
+        //    SetupBtn(btnClearSearch, "Clear", Color.DimGray);
+
+        //    btnSearch.Width = 90;
+        //    btnClearSearch.Width = 90;
+
+        //    flp.Controls.Add(btnSearch);
+        //    flp.Controls.Add(btnClearSearch);
+
+        //    header.Controls.Add(lblTitle, 0, 0);
+        //    header.Controls.Add(flp, 1, 0);
+
+        //    root.Controls.Add(header, 0, 0);
+
+        //    var body = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        ColumnCount = 2
+        //    };
+        //    body.ColumnStyles.Clear();
+        //    body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        //    body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 430F));
+        //    root.Controls.Add(body, 0, 1);
+
+        //    SetupGrid(dgvFines);
+
+        //    body.Controls.Add(new GroupBox
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        Text = "Pending Fines",
+        //        Controls = { dgvFines }
+        //    }, 0, 0);
+
+        //    var right = new GroupBox
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        Text = "Fine Payment / Refund"
+        //    };
+
+        //    var form = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        ColumnCount = 2,
+        //        Padding = new Padding(10)
+        //    };
+        //    form.ColumnStyles.Clear();
+        //    form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
+        //    form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+        //    form.RowStyles.Clear();
+        //    for (int i = 0; i < 10; i++)
+        //        form.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+
+        //    form.RowStyles.Add(new RowStyle(SizeType.Absolute, 65F));   // Purpose
+        //    form.RowStyles.Add(new RowStyle(SizeType.Absolute, 125F));  // Calculation
+        //    form.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));   // Bottom buttons
+        //    form.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));   // filler
+
+        //    AddRow(form, 0, "Fine Doc", txtFineDoc);
+        //    AddRow(form, 1, "Member", txtMemberCode);
+        //    AddRow(form, 2, "Ref Doc", txtRefDoc);
+        //    AddRow(form, 3, "Total", txtTotal);
+        //    AddRow(form, 4, "Paid", txtPaid);
+        //    AddRow(form, 5, "Balance", txtBalance);
+        //    AddRow(form, 6, "Amount", numPayAmount);
+        //    AddRow(form, 7, "Pay Mode", cmbPayMode);
+        //    AddRow(form, 8, "Ref No", txtRefNo);
+        //    AddRow(form, 9, "Remark", txtRemark);
+        //    AddRow(form, 10, "Purpose", txtPurpose);
+        //    AddRow(form, 11, "Calculation", txtCalculation);
+
+        //    SetupBtn(btnHelp, "Help", Color.SlateGray);
+        //    SetupBtn(btnClearForm, "Clear", Color.DimGray);
+
+        //    btnHelp.Dock = DockStyle.Fill;
+        //    btnClearForm.Dock = DockStyle.Fill;
+
+        //    btnHelp.Margin = new Padding(0, 0, 6, 0);
+        //    btnClearForm.Margin = new Padding(0);
+
+        //    var bottomButtons = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Top,
+        //        Height = 34,
+        //        ColumnCount = 2,
+        //        RowCount = 1,
+        //        Margin = new Padding(0),
+        //        Padding = new Padding(0)
+        //    };
+
+        //    bottomButtons.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+        //    bottomButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+        //    bottomButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
+
+        //    bottomButtons.Controls.Add(btnHelp, 0, 0);
+        //    bottomButtons.Controls.Add(btnClearForm, 1, 0);
+
+        //    form.Controls.Add(new Label
+        //    {
+        //        Text = "Help / Clear",
+        //        AutoSize = true,
+        //        Padding = new Padding(0, 6, 0, 0)
+        //    }, 0, 12);
+
+        //    form.Controls.Add(bottomButtons, 1, 12);
+
+        //    right.Controls.Add(form);
+        //    body.Controls.Add(right, 1, 0);
+        //}
         private void BuildUi()
         {
             BackColor = Color.PapayaWhip;
@@ -323,33 +487,39 @@ L = Lost";
             var body = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 2
+                ColumnCount = 2,
+                Margin = new Padding(0)
             };
             body.ColumnStyles.Clear();
-            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 430F));
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62F));
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38F));
             root.Controls.Add(body, 0, 1);
 
             SetupGrid(dgvFines);
 
-            body.Controls.Add(new GroupBox
+            var leftGroup = new GroupBox
             {
                 Dock = DockStyle.Fill,
                 Text = "Pending Fines",
-                Controls = { dgvFines }
-            }, 0, 0);
+                Padding = new Padding(6)
+            };
+            leftGroup.Controls.Add(dgvFines);
+            body.Controls.Add(leftGroup, 0, 0);
 
             var right = new GroupBox
             {
                 Dock = DockStyle.Fill,
-                Text = "Fine Payment / Refund"
+                Text = "Fine Payment / Refund",
+                Padding = new Padding(6),
+                MinimumSize = new Size(360, 0)
             };
 
             var form = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                Padding = new Padding(10)
+                Padding = new Padding(10),
+                AutoScroll = true
             };
             form.ColumnStyles.Clear();
             form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
@@ -357,12 +527,12 @@ L = Lost";
 
             form.RowStyles.Clear();
             for (int i = 0; i < 10; i++)
-                form.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+                form.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
 
-            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 65F));   // Purpose
-            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 125F));  // Calculation
-            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));   // Bottom buttons
-            form.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));   // filler
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 80F));     // Purpose
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 140F));    // Calculation
+            form.RowStyles.Add(new RowStyle(SizeType.AutoSize));          // Bottom buttons
+            form.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));     // filler
 
             AddRow(form, 0, "Fine Doc", txtFineDoc);
             AddRow(form, 1, "Member", txtMemberCode);
@@ -380,34 +550,34 @@ L = Lost";
             SetupBtn(btnHelp, "Help", Color.SlateGray);
             SetupBtn(btnClearForm, "Clear", Color.DimGray);
 
-            btnHelp.Dock = DockStyle.Fill;
-            btnClearForm.Dock = DockStyle.Fill;
+            btnHelp.AutoSize = true;
+            btnHelp.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnHelp.Margin = new Padding(0, 0, 8, 8);
 
-            btnHelp.Margin = new Padding(0, 0, 6, 0);
-            btnClearForm.Margin = new Padding(0);
+            btnClearForm.AutoSize = true;
+            btnClearForm.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnClearForm.Margin = new Padding(0, 0, 0, 8);
 
-            var bottomButtons = new TableLayoutPanel
+            var bottomButtons = new FlowLayoutPanel
             {
-                Dock = DockStyle.Top,
-                Height = 34,
-                ColumnCount = 2,
-                RowCount = 1,
+                Dock = DockStyle.Fill,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Margin = new Padding(0),
                 Padding = new Padding(0)
             };
 
-            bottomButtons.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-            bottomButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            bottomButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-
-            bottomButtons.Controls.Add(btnHelp, 0, 0);
-            bottomButtons.Controls.Add(btnClearForm, 1, 0);
+            bottomButtons.Controls.Add(btnHelp);
+            bottomButtons.Controls.Add(btnClearForm);
 
             form.Controls.Add(new Label
             {
                 Text = "Help / Clear",
                 AutoSize = true,
-                Padding = new Padding(0, 6, 0, 0)
+                Padding = new Padding(0, 6, 0, 0),
+                Dock = DockStyle.Fill
             }, 0, 12);
 
             form.Controls.Add(bottomButtons, 1, 12);
@@ -415,7 +585,6 @@ L = Lost";
             right.Controls.Add(form);
             body.Controls.Add(right, 1, 0);
         }
-
         private static void SetupGrid(DataGridView dgv)
         {
             dgv.Dock = DockStyle.Fill;
@@ -442,6 +611,7 @@ L = Lost";
             };
 
             input.Dock = DockStyle.Fill;
+            input.Margin = new Padding(3);
 
             t.Controls.Add(lbl, 0, row);
             t.Controls.Add(input, 1, row);
@@ -450,8 +620,9 @@ L = Lost";
         private static void SetupBtn(Button b, string text, Color back)
         {
             b.Text = text;
-            b.Height = 34;
-            b.MinimumSize = new Size(95, 34);
+            b.Height = 36;
+            b.MinimumSize = new Size(95, 36);
+            b.Padding = new Padding(12, 0, 12, 0);
             b.BackColor = back;
             b.ForeColor = Color.White;
             b.FlatStyle = FlatStyle.Flat;

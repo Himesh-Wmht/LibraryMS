@@ -32,7 +32,8 @@ namespace LibraryMS.Win
         private readonly BookBorrowService _bookBorrowService;
         private readonly BookReturnService _bookReturnService;
         private readonly FineCollectionService _fineCollectionService;
-       
+        private readonly ReportService _reportService;
+
         // Top actions (we keep references for enabling/disabling if needed)
         private IconButton btnRefresh = null!;
         private IconButton btnEdit = null!;
@@ -41,7 +42,7 @@ namespace LibraryMS.Win
         private IconButton btnLogout = null!;
 
         public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo, BookCatalogService bookCatalogService,BookInventoryService bookInventoryService, BookCategoryService bookCategoryService, PasswordResetService passwordResetService, UserLockService userLockService, BookReservationService reservationsService, UserLookupService userLookupService, BookTransferService bookTransfer, LocationLookupService locationLookupService, BookBorrowService bookBorrowService,
-BookReturnService bookReturnService, FineCollectionService fineCollectionService)
+BookReturnService bookReturnService, FineCollectionService fineCollectionService, ReportService reportService)
         {
             InitializeComponent();
 
@@ -62,7 +63,8 @@ BookReturnService bookReturnService, FineCollectionService fineCollectionService
             _bookBorrowService = bookBorrowService ?? throw new ArgumentNullException(nameof(bookBorrowService));
             _bookReturnService = bookReturnService ?? throw new ArgumentNullException(nameof(bookReturnService));
             _fineCollectionService = fineCollectionService ?? throw new ArgumentNullException(nameof(fineCollectionService));
-          
+            _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+
             // ---- SplitContainer standard layout ----
             splitContainer1.Dock = DockStyle.Fill;
             splitContainer1.Orientation = Orientation.Vertical;
@@ -381,7 +383,78 @@ BookReturnService bookReturnService, FineCollectionService fineCollectionService
                 ShowPage(new UCFineCollection(_fineCollectionService));
                 return;
             }
+            if (menu.Code == "M00041")
+            {
+                ShowPage(new UCReportGrid(
+                    "Borrowing / Issued Report",
+                    (from, to, top) => _reportService.GetBorrowingIssuedAsync(AppSession.Current!.LocationCode, from, to),
+                    useDates: true,
+                    useTop: false
+                ));
+                return;
+            }
+            if (menu.Code == "M00042")
+            {
+                ShowPage(new UCReportGrid(
+                    "Overdue Items Report",
+                    (from, to, top) => _reportService.GetOverdueItemsAsync(AppSession.Current!.LocationCode),
+                    useDates: false,
+                    useTop: false
+                ));
+                return;
+            }
+            if (menu.Code == "M00042")
+            {
+                ShowPage(new UCReportGrid(
+                    "Overdue Items Report",
+                    (from, to, top) => _reportService.GetOverdueItemsAsync(AppSession.Current!.LocationCode),
+                    useDates: false,
+                    useTop: false
+                ));
+                return;
+            }
+            if (menu.Code == "M00043")
+            {
+                ShowPage(new UCReportGrid(
+                    "Book Availability Report",
+                    (from, to, top) => _reportService.GetBookAvailabilityAsync(AppSession.Current!.LocationCode),
+                    useDates: false,
+                    useTop: false
+                ));
+                return;
+            }
+            if (menu.Code == "M00044")
+            {
+                ShowPage(new UCReportGrid(
+                    "Member Activity Report",
+                    (from, to, top) => _reportService.GetMemberActivityAsync(AppSession.Current!.LocationCode, from, to),
+                    useDates: true,
+                    useTop: false
+                ));
+                return;
+            }
+            if (menu.Code == "M00045")
+            {
+                ShowPage(new UCReportGrid(
+                    "Fine Summary Report",
+                    (from, to, top) => _reportService.GetFineSummaryAsync(AppSession.Current!.LocationCode, from, to),
+                    useDates: true,
+                    useTop: false
+                ));
+                return;
+            }
+            if (menu.Code == "M00046")
+            {
+                ShowPage(new UCReportGrid(
+                    "Most Borrowed Books Report",
+                    (from, to, top) => _reportService.GetMostBorrowedBooksAsync(AppSession.Current!.LocationCode, from, to, top),
+                    useDates: true,
+                    useTop: true
+                ));
+                return;
+            }
         }
+
 
         private void ShowPage(Control page)
         {

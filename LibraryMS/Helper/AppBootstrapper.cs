@@ -51,6 +51,7 @@ namespace LibraryMS.Win.Helper
             var borrowRepo = new BookBorrowRepository(db);
             var returnRepo = new BookReturnRepository(db);
             var fineRepo = new FineCollectionRepository(db);
+            var reportRepo = new ReportRepository(db);
 
             // Services (BLL)
             var auth = new AuthService(userRepo, lockRepo);
@@ -73,6 +74,7 @@ namespace LibraryMS.Win.Helper
             var borrowService = new BookBorrowService(borrowRepo);
             var returnService = new BookReturnService(returnRepo, fineCalculator);
             var fineService = new FineCollectionService(fineRepo);
+            var reportService = new ReportService(reportRepo);
 
             groupMenuService.EnsureAsync().GetAwaiter().GetResult();
             return new ServiceContainer(
@@ -94,7 +96,8 @@ namespace LibraryMS.Win.Helper
                 LocationLookup: locLookupService,
                 Borrows: borrowService,
                 Returns: returnService,
-                Fines: fineService
+                Fines: fineService,
+                Reports: reportService
             );
         }
     }
@@ -118,6 +121,7 @@ namespace LibraryMS.Win.Helper
         LocationLookupService LocationLookup,
         BookBorrowService Borrows,
         BookReturnService Returns,
-        FineCollectionService Fines
+        FineCollectionService Fines,
+        ReportService Reports
     );
 }

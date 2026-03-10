@@ -65,11 +65,11 @@ namespace LibraryMS.DAL.Repositories
         public async Task<List<ResMyRowDto>> GetMyAsync(string userCode, string locCode)
         {
             const string sql = @"
-SELECT r.BR_ID, r.BR_BOOKCODE, b.B_TITLE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS, r.BR_EXPIRES_ON
-FROM dbo.T_TBLBOOKRESERVATIONS r
-JOIN dbo.M_TBLBOOKS b ON b.B_CODE=r.BR_BOOKCODE
-WHERE r.BR_USERCODE=@U AND r.BR_LOCCODE=@L
-ORDER BY r.BR_REQ_DATE DESC;";
+            SELECT r.BR_ID, r.BR_BOOKCODE, b.B_TITLE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS, r.BR_EXPIRES_ON
+            FROM dbo.T_TBLBOOKRESERVATIONS r
+            JOIN dbo.M_TBLBOOKS b ON b.B_CODE=r.BR_BOOKCODE
+            WHERE r.BR_USERCODE=@U AND r.BR_LOCCODE=@L
+            ORDER BY r.BR_REQ_DATE DESC;";
 
             var list = new List<ResMyRowDto>();
             await using var con = _db.CreateConnection();
@@ -97,14 +97,14 @@ ORDER BY r.BR_REQ_DATE DESC;";
         public async Task<List<ResMyRowDto>> GetActiveByUserAsync(string userCode, string locCode)
         {
             const string sql = @"
-SELECT r.BR_ID, r.BR_BOOKCODE, b.B_TITLE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS, r.BR_EXPIRES_ON
-FROM dbo.T_TBLBOOKRESERVATIONS r
-JOIN dbo.M_TBLBOOKS b ON b.B_CODE = r.BR_BOOKCODE
-WHERE r.BR_USERCODE = @U
-  AND r.BR_LOCCODE = @L
-  AND r.BR_STATUS = 'A'
-  AND r.BR_EXPIRES_ON >= CONVERT(date, SYSDATETIME())
-ORDER BY r.BR_REQ_DATE DESC;";
+            SELECT r.BR_ID, r.BR_BOOKCODE, b.B_TITLE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS, r.BR_EXPIRES_ON
+            FROM dbo.T_TBLBOOKRESERVATIONS r
+            JOIN dbo.M_TBLBOOKS b ON b.B_CODE = r.BR_BOOKCODE
+            WHERE r.BR_USERCODE = @U
+              AND r.BR_LOCCODE = @L
+              AND r.BR_STATUS = 'A'
+              AND r.BR_EXPIRES_ON >= CONVERT(date, SYSDATETIME())
+            ORDER BY r.BR_REQ_DATE DESC;";
 
             var list = new List<ResMyRowDto>();
             await using var con = _db.CreateConnection();
@@ -133,10 +133,10 @@ ORDER BY r.BR_REQ_DATE DESC;";
         public async Task CreateRequestAsync(ReservationRequestDto dto)
         {
             const string sql = @"
-INSERT INTO dbo.T_TBLBOOKRESERVATIONS
-(BR_USERCODE, BR_BOOKCODE, BR_LOCCODE, BR_QTY, BR_HOLD_DAYS, BR_REQ_DATE, BR_STATUS, BR_REMARK, M_DATE)
-VALUES
-(@U, @B, @L, @Q, @D, SYSDATETIME(), 'P', @R, SYSDATETIME());";
+            INSERT INTO dbo.T_TBLBOOKRESERVATIONS
+            (BR_USERCODE, BR_BOOKCODE, BR_LOCCODE, BR_QTY, BR_HOLD_DAYS, BR_REQ_DATE, BR_STATUS, BR_REMARK, M_DATE)
+            VALUES
+            (@U, @B, @L, @Q, @D, SYSDATETIME(), 'P', @R, SYSDATETIME());";
 
             await using var con = _db.CreateConnection();
             await using var cmd = new SqlCommand(sql, con);
@@ -157,19 +157,19 @@ VALUES
         {
             var sql = loadAll
                 ? @"
-SELECT r.BR_ID, r.BR_USERCODE, ISNULL(u.U_NAME,''), r.BR_BOOKCODE, b.B_TITLE, r.BR_LOCCODE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS
-FROM dbo.T_TBLBOOKRESERVATIONS r
-JOIN dbo.M_TBLBOOKS b ON b.B_CODE=r.BR_BOOKCODE
-LEFT JOIN dbo.M_TBLUSERS u ON u.U_CODE=r.BR_USERCODE
-WHERE r.BR_LOCCODE=@L
-ORDER BY r.BR_REQ_DATE DESC;"
-                : @"
-SELECT r.BR_ID, r.BR_USERCODE, ISNULL(u.U_NAME,''), r.BR_BOOKCODE, b.B_TITLE, r.BR_LOCCODE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS
-FROM dbo.T_TBLBOOKRESERVATIONS r
-JOIN dbo.M_TBLBOOKS b ON b.B_CODE=r.BR_BOOKCODE
-LEFT JOIN dbo.M_TBLUSERS u ON u.U_CODE=r.BR_USERCODE
-WHERE r.BR_LOCCODE=@L AND r.BR_STATUS='P'
-ORDER BY r.BR_REQ_DATE DESC;";
+                    SELECT r.BR_ID, r.BR_USERCODE, ISNULL(u.U_NAME,''), r.BR_BOOKCODE, b.B_TITLE, r.BR_LOCCODE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS
+                    FROM dbo.T_TBLBOOKRESERVATIONS r
+                    JOIN dbo.M_TBLBOOKS b ON b.B_CODE=r.BR_BOOKCODE
+                    LEFT JOIN dbo.M_TBLUSERS u ON u.U_CODE=r.BR_USERCODE
+                    WHERE r.BR_LOCCODE=@L
+                    ORDER BY r.BR_REQ_DATE DESC;"
+                                    : @"
+                    SELECT r.BR_ID, r.BR_USERCODE, ISNULL(u.U_NAME,''), r.BR_BOOKCODE, b.B_TITLE, r.BR_LOCCODE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS
+                    FROM dbo.T_TBLBOOKRESERVATIONS r
+                    JOIN dbo.M_TBLBOOKS b ON b.B_CODE=r.BR_BOOKCODE
+                    LEFT JOIN dbo.M_TBLUSERS u ON u.U_CODE=r.BR_USERCODE
+                    WHERE r.BR_LOCCODE=@L AND r.BR_STATUS='P'
+                    ORDER BY r.BR_REQ_DATE DESC;";
 
             var list = new List<ResPendingRowDto>();
             await using var con = _db.CreateConnection();

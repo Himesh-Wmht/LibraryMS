@@ -215,6 +215,199 @@ namespace LibraryMS.Win.Pages
             btnLineClear.Click += (_, __) => ClearEntry();
         }
 
+        //private void BuildUi()
+        //{
+        //    BackColor = Color.PapayaWhip;
+
+        //    cmbCondition.Items.AddRange(new object[] { "N", "O", "D", "L" });
+        //    cmbCondition.SelectedIndex = 0;
+
+        //    var gb = new GroupBox
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        Padding = new Padding(10),
+        //        Text = "Book Return"
+        //    };
+        //    Controls.Add(gb);
+
+        //    var root = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        RowCount = 2
+        //    };
+        //    root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+        //    root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+        //    gb.Controls.Add(root);
+
+        //    var header = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        ColumnCount = 2,
+        //        Padding = new Padding(6, 10, 6, 0)
+        //    };
+        //    header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        //    header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+        //    lblTitle.Dock = DockStyle.Fill;
+        //    lblTitle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+        //    lblTitle.ForeColor = Color.Teal;
+        //    lblTitle.TextAlign = ContentAlignment.MiddleLeft;
+
+        //    var flp = new FlowLayoutPanel
+        //    {
+        //        AutoSize = true,
+        //        WrapContents = false,
+        //        Dock = DockStyle.Fill,
+        //        Margin = new Padding(0)
+        //    };
+
+        //    flp.Controls.Add(new Label
+        //    {
+        //        Text = "Borrow Search:",
+        //        AutoSize = true,
+        //        Padding = new Padding(0, 7, 0, 0)
+        //    });
+
+        //    flp.Controls.Add(txtSearch);
+
+        //    SetupBtn(btnSearch, "Search", Color.SteelBlue);
+        //    SetupBtn(btnClearSearch, "Clear", Color.DimGray);
+
+        //    btnSearch.Width = 90;
+        //    btnClearSearch.Width = 90;
+
+        //    flp.Controls.Add(btnSearch);
+        //    flp.Controls.Add(btnClearSearch);
+
+        //    header.Controls.Add(lblTitle, 0, 0);
+        //    header.Controls.Add(flp, 1, 0);
+
+        //    root.Controls.Add(header, 0, 0);
+
+        //    var body = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        ColumnCount = 2
+        //    };
+        //    body.ColumnStyles.Clear();
+        //    body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+        //    body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 420F)); // fixed width for clean buttons
+        //    root.Controls.Add(body, 0, 1);
+
+        //    var left = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        RowCount = 3
+        //    };
+        //    left.RowStyles.Add(new RowStyle(SizeType.Percent, 32F));
+        //    left.RowStyles.Add(new RowStyle(SizeType.Percent, 33F));
+        //    left.RowStyles.Add(new RowStyle(SizeType.Percent, 35F));
+
+        //    SetupGrid(dgvBorrows);
+        //    SetupGrid(dgvDetails);
+        //    SetupGrid(dgvLines);
+
+        //    dgvLines.DataSource = _lines;
+
+        //    left.Controls.Add(new GroupBox
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        Text = "Open Borrow Documents",
+        //        Controls = { dgvBorrows }
+        //    }, 0, 0);
+
+        //    left.Controls.Add(new GroupBox
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        Text = "Borrow Detail Lines",
+        //        Controls = { dgvDetails }
+        //    }, 0, 1);
+
+        //    left.Controls.Add(new GroupBox
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        Text = "Return Lines",
+        //        Controls = { dgvLines }
+        //    }, 0, 2);
+
+        //    var right = new GroupBox
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        Text = "Return Details (Press SAVE to process)"
+        //    };
+
+        //    var form = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Fill,
+        //        ColumnCount = 2,
+        //        Padding = new Padding(10)
+        //    };
+        //    form.ColumnStyles.Clear();
+        //    form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
+        //    form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+        //    form.RowStyles.Clear();
+        //    for (int i = 0; i < 9; i++)
+        //        form.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
+
+        //    form.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F)); // actions row
+        //    form.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // filler
+
+        //    AddRow(form, 0, "Borrow Doc", txtBorrowDoc);
+        //    AddRow(form, 1, "Book Code", txtBookCode);
+        //    AddRow(form, 2, "Title", txtTitle);
+        //    AddRow(form, 3, "Outstanding", numOutstanding);
+        //    AddRow(form, 4, "Return Qty", numReturnQty);
+        //    AddRow(form, 5, "Due Date", dtDueDate);
+        //    AddRow(form, 6, "Condition", cmbCondition);
+        //    AddRow(form, 7, "Remark", txtRemark);
+        //    AddRow(form, 8, "Fine Preview", lblFinePreview);
+
+        //    SetupBtn(btnAdd, "Add Line", Color.SeaGreen);
+        //    SetupBtn(btnRemove, "Remove", Color.IndianRed);
+        //    SetupBtn(btnLineClear, "Clear", Color.DimGray);
+
+        //    btnAdd.Margin = new Padding(0, 0, 6, 0);
+        //    btnRemove.Margin = new Padding(0, 0, 6, 0);
+        //    btnLineClear.Margin = new Padding(0);
+
+        //    btnAdd.Dock = DockStyle.Fill;
+        //    btnRemove.Dock = DockStyle.Fill;
+        //    btnLineClear.Dock = DockStyle.Fill;
+
+        //    var actions = new TableLayoutPanel
+        //    {
+        //        Dock = DockStyle.Top,
+        //        Height = 34,
+        //        ColumnCount = 3,
+        //        RowCount = 1,
+        //        Margin = new Padding(0),
+        //        Padding = new Padding(0)
+        //    };
+
+        //    actions.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+        //    actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34F));
+        //    actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+        //    actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+
+        //    actions.Controls.Add(btnAdd, 0, 0);
+        //    actions.Controls.Add(btnRemove, 1, 0);
+        //    actions.Controls.Add(btnLineClear, 2, 0);
+
+        //    form.Controls.Add(new Label
+        //    {
+        //        Text = "Actions",
+        //        AutoSize = true,
+        //        Padding = new Padding(0, 6, 0, 0)
+        //    }, 0, 9);
+
+        //    form.Controls.Add(actions, 1, 9);
+
+        //    right.Controls.Add(form);
+
+        //    body.Controls.Add(left, 0, 0);
+        //    body.Controls.Add(right, 1, 0);
+        //}
         private void BuildUi()
         {
             BackColor = Color.PapayaWhip;
@@ -233,7 +426,10 @@ namespace LibraryMS.Win.Pages
             var root = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                RowCount = 2
+                ColumnCount = 1,
+                RowCount = 2,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
             };
             root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
             root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
@@ -243,6 +439,7 @@ namespace LibraryMS.Win.Pages
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
+                Margin = new Padding(0),
                 Padding = new Padding(6, 10, 6, 0)
             };
             header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
@@ -258,46 +455,61 @@ namespace LibraryMS.Win.Pages
                 AutoSize = true,
                 WrapContents = false,
                 Dock = DockStyle.Fill,
-                Margin = new Padding(0)
+                FlowDirection = FlowDirection.LeftToRight,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
             };
 
-            flp.Controls.Add(new Label
+            var lblSearch = new Label
             {
                 Text = "Borrow Search:",
                 AutoSize = true,
-                Padding = new Padding(0, 7, 0, 0)
-            });
+                Padding = new Padding(0, 7, 0, 0),
+                Margin = new Padding(0, 6, 8, 0)
+            };
 
-            flp.Controls.Add(txtSearch);
+            txtSearch.Width = 220;
+            txtSearch.Margin = new Padding(0, 3, 10, 0);
 
             SetupBtn(btnSearch, "Search", Color.SteelBlue);
             SetupBtn(btnClearSearch, "Clear", Color.DimGray);
 
-            btnSearch.Width = 90;
-            btnClearSearch.Width = 90;
+            btnSearch.Width = 74;
+            btnClearSearch.Width = 74;
 
+            btnSearch.Margin = new Padding(0, 0, 8, 0);
+            btnClearSearch.Margin = new Padding(0, 0, 0, 0);
+
+            flp.Controls.Add(lblSearch);
+            flp.Controls.Add(txtSearch);
             flp.Controls.Add(btnSearch);
             flp.Controls.Add(btnClearSearch);
 
             header.Controls.Add(lblTitle, 0, 0);
             header.Controls.Add(flp, 1, 0);
-
             root.Controls.Add(header, 0, 0);
 
             var body = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 2
+                ColumnCount = 2,
+                Margin = new Padding(0),
+                Padding = new Padding(0)
             };
+
             body.ColumnStyles.Clear();
-            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 420F)); // fixed width for clean buttons
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 68F));
+            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 32F));
+
             root.Controls.Add(body, 0, 1);
 
             var left = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                RowCount = 3
+                ColumnCount = 1,
+                RowCount = 3,
+                Margin = new Padding(0, 0, 10, 0),
+                Padding = new Padding(0)
             };
             left.RowStyles.Add(new RowStyle(SizeType.Percent, 32F));
             left.RowStyles.Add(new RowStyle(SizeType.Percent, 33F));
@@ -309,39 +521,50 @@ namespace LibraryMS.Win.Pages
 
             dgvLines.DataSource = _lines;
 
-            left.Controls.Add(new GroupBox
+            var gbBorrows = new GroupBox
             {
                 Dock = DockStyle.Fill,
                 Text = "Open Borrow Documents",
-                Controls = { dgvBorrows }
-            }, 0, 0);
+                Padding = new Padding(6)
+            };
+            gbBorrows.Controls.Add(dgvBorrows);
 
-            left.Controls.Add(new GroupBox
+            var gbDetails = new GroupBox
             {
                 Dock = DockStyle.Fill,
                 Text = "Borrow Detail Lines",
-                Controls = { dgvDetails }
-            }, 0, 1);
+                Padding = new Padding(6)
+            };
+            gbDetails.Controls.Add(dgvDetails);
 
-            left.Controls.Add(new GroupBox
+            var gbLines = new GroupBox
             {
                 Dock = DockStyle.Fill,
                 Text = "Return Lines",
-                Controls = { dgvLines }
-            }, 0, 2);
+                Padding = new Padding(6)
+            };
+            gbLines.Controls.Add(dgvLines);
+
+            left.Controls.Add(gbBorrows, 0, 0);
+            left.Controls.Add(gbDetails, 0, 1);
+            left.Controls.Add(gbLines, 0, 2);
 
             var right = new GroupBox
             {
                 Dock = DockStyle.Fill,
-                Text = "Return Details (Press SAVE to process)"
+                Text = "Return Details (Press SAVE to process)",
+                Padding = new Padding(6)
             };
 
             var form = new TableLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                Padding = new Padding(10)
+                RowCount = 12,
+                Padding = new Padding(10),
+                Margin = new Padding(0)
             };
+
             form.ColumnStyles.Clear();
             form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
             form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
@@ -350,8 +573,18 @@ namespace LibraryMS.Win.Pages
             for (int i = 0; i < 9; i++)
                 form.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
 
-            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F)); // actions row
-            form.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // filler
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 24F));   // Actions label
+            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 40F));   // Actions buttons
+            form.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));   // filler
+
+            txtBorrowDoc.Margin = new Padding(0, 2, 0, 2);
+            txtBookCode.Margin = new Padding(0, 2, 0, 2);
+            txtTitle.Margin = new Padding(0, 2, 0, 2);
+            txtRemark.Margin = new Padding(0, 2, 0, 2);
+            numOutstanding.Margin = new Padding(0, 2, 0, 2);
+            numReturnQty.Margin = new Padding(0, 2, 0, 2);
+            dtDueDate.Margin = new Padding(0, 2, 0, 2);
+            cmbCondition.Margin = new Padding(0, 2, 0, 2);
 
             AddRow(form, 0, "Borrow Doc", txtBorrowDoc);
             AddRow(form, 1, "Book Code", txtBookCode);
@@ -367,48 +600,51 @@ namespace LibraryMS.Win.Pages
             SetupBtn(btnRemove, "Remove", Color.IndianRed);
             SetupBtn(btnLineClear, "Clear", Color.DimGray);
 
-            btnAdd.Margin = new Padding(0, 0, 6, 0);
-            btnRemove.Margin = new Padding(0, 0, 6, 0);
-            btnLineClear.Margin = new Padding(0);
-
             btnAdd.Dock = DockStyle.Fill;
             btnRemove.Dock = DockStyle.Fill;
             btnLineClear.Dock = DockStyle.Fill;
 
+            btnAdd.Margin = new Padding(0, 0, 6, 0);
+            btnRemove.Margin = new Padding(0, 0, 6, 0);
+            btnLineClear.Margin = new Padding(0);
+
+            var lblActions = new Label
+            {
+                Text = "Actions",
+                AutoSize = true,
+                Padding = new Padding(0, 4, 0, 0),
+                Dock = DockStyle.Fill
+            };
+
             var actions = new TableLayoutPanel
             {
-                Dock = DockStyle.Top,
-                Height = 34,
+                Dock = DockStyle.Fill,
                 ColumnCount = 3,
                 RowCount = 1,
                 Margin = new Padding(0),
                 Padding = new Padding(0)
             };
 
-            actions.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34F));
-            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
-            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.34F));
+            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33F));
+            actions.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
 
             actions.Controls.Add(btnAdd, 0, 0);
             actions.Controls.Add(btnRemove, 1, 0);
             actions.Controls.Add(btnLineClear, 2, 0);
 
-            form.Controls.Add(new Label
-            {
-                Text = "Actions",
-                AutoSize = true,
-                Padding = new Padding(0, 6, 0, 0)
-            }, 0, 9);
+            form.Controls.Add(lblActions, 0, 9);
+            form.SetColumnSpan(lblActions, 2);
 
-            form.Controls.Add(actions, 1, 9);
+            form.Controls.Add(actions, 0, 10);
+            form.SetColumnSpan(actions, 2);
 
             right.Controls.Add(form);
 
             body.Controls.Add(left, 0, 0);
             body.Controls.Add(right, 1, 0);
         }
-
         private static void SetupGrid(DataGridView dgv)
         {
             dgv.Dock = DockStyle.Fill;
@@ -440,16 +676,30 @@ namespace LibraryMS.Win.Pages
             t.Controls.Add(input, 1, row);
         }
 
+        //private static void SetupBtn(Button b, string text, Color back)
+        //{
+        //    b.Text = text;
+        //    b.Height = 34;
+        //    b.MinimumSize = new Size(95, 34); // prevents text cutoff
+        //    b.BackColor = back;
+        //    b.ForeColor = Color.White;
+        //    b.FlatStyle = FlatStyle.Flat;
+        //    b.FlatAppearance.BorderSize = 0;
+        //    b.Margin = new Padding(0);
+        //    b.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        //    b.TextAlign = ContentAlignment.MiddleCenter;
+        //    b.UseVisualStyleBackColor = false;
+        //}
         private static void SetupBtn(Button b, string text, Color back)
         {
             b.Text = text;
             b.Height = 34;
-            b.MinimumSize = new Size(95, 34); // prevents text cutoff
+            b.MinimumSize = new Size(0, 34);
             b.BackColor = back;
             b.ForeColor = Color.White;
             b.FlatStyle = FlatStyle.Flat;
             b.FlatAppearance.BorderSize = 0;
-            b.Margin = new Padding(0);
+            b.Margin = new Padding(4, 0, 4, 0);
             b.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             b.TextAlign = ContentAlignment.MiddleCenter;
             b.UseVisualStyleBackColor = false;
