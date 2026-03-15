@@ -22,7 +22,6 @@ namespace LibraryMS.Win.Pages
 
             Dock = DockStyle.Fill;
 
-            // ✅ ensures labels + button captions exist always
             EnsureUi();
 
             dgvBooks.AutoGenerateColumns = true;
@@ -36,14 +35,14 @@ namespace LibraryMS.Win.Pages
 
             btnSearch.Click += async (_, __) => await LoadGridAsync();
             btnNew.Click += (_, __) => ClearForm();
+            btnUploadExcel.Click += async (_, __) => await UploadExcelAsync();
 
-            // Ensure load is wired even if designer missed it
             Load += UCBookCatalog_Load;
         }
 
         public async Task OnRefreshAsync()
         {
-            EnsureUi(); // ✅ safe to re-run
+            EnsureUi();
             await LoadLookupsAsync();
             await LoadGridAsync();
             ClearForm();
@@ -51,7 +50,7 @@ namespace LibraryMS.Win.Pages
 
         public async Task OnSaveAsync()
         {
-            EnsureUi(); // ✅ safe to re-run
+            EnsureUi();
 
             if (!ValidateForm(out var msg))
             {
@@ -79,7 +78,7 @@ namespace LibraryMS.Win.Pages
             txtCode.ReadOnly = true;
         }
 
-        public void OnEdit() { /* selecting grid auto loads */ }
+        public void OnEdit() { }
         public Task OnProcessAsync() => Task.CompletedTask;
 
         private async void UCBookCatalog_Load(object? sender, EventArgs e)
@@ -94,7 +93,6 @@ namespace LibraryMS.Win.Pages
         {
             var cats = await _service.GetCategoriesAsync();
 
-            // Filter combo: add "ALL"
             var filterList = cats.ToList();
             filterList.Insert(0, new BookCategoryDto(Code: "", Name: "ALL", Active: true));
 
@@ -157,6 +155,72 @@ namespace LibraryMS.Win.Pages
             txtCode.Focus();
         }
 
+        private async Task UploadExcelAsync()
+        {
+            using var ofd = new OpenFileDialog
+            {
+                Title = "Select Book Catalog Excel",
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                Multiselect = false
+            };
+
+            if (ofd.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            Cursor = Cursors.WaitCursor;
+            try
+            {
+                var result = await _service.ImportExcelAsync(ofd.FileName);
+
+                if (result.Ok)
+                {
+                    MessageBox.Show(
+                        $"Excel upload completed.\n\n" +
+                        $"Catalog upserted: {result.CatalogUpsertCount}\n" +
+                        $"Inventory upserted: {result.InventoryUpsertCount}",
+                        "Success",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+
+                    await LoadGridAsync();
+                    return;
+                }
+
+                ShowImportErrors(result.Errors);
+            }
+            finally
+            {
+                Cursor = Cursors.Default;
+            }
+        }
+
+        private void ShowImportErrors(System.Collections.Generic.IEnumerable<string> errors)
+        {
+            var text = string.Join(Environment.NewLine, errors);
+
+            using var frm = new Form
+            {
+                Text = "Excel Upload Errors",
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(900, 550),
+                MinimizeBox = false,
+                MaximizeBox = false
+            };
+
+            var txt = new TextBox
+            {
+                Multiline = true,
+                ReadOnly = true,
+                ScrollBars = ScrollBars.Both,
+                Dock = DockStyle.Fill,
+                Font = new Font("Consolas", 10F),
+                Text = text
+            };
+
+            frm.Controls.Add(txt);
+            frm.ShowDialog(this);
+        }
+
         private bool ValidateForm(out string msg)
         {
             if (string.IsNullOrWhiteSpace(txtCode.Text)) { msg = "Book Code is required."; return false; }
@@ -167,8 +231,6 @@ namespace LibraryMS.Win.Pages
 
         private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
 
-        // -------------------- PERMANENT UI FIXES --------------------
-
         private void EnsureUi()
         {
             EnsureHeaderButtons();
@@ -177,17 +239,18 @@ namespace LibraryMS.Win.Pages
 
         private void EnsureHeaderButtons()
         {
-            // Designer sometimes wipes Text -> enforce always
             btnSearch.Text = "Search";
             btnNew.Text = "New";
+            btnUploadExcel.Text = "Upload Excel";
 
             StyleBtn(btnSearch, Color.SteelBlue);
             StyleBtn(btnNew, Color.DimGray);
+            StyleBtn(btnUploadExcel, Color.DarkOrange);
         }
 
         private static void StyleBtn(Button b, Color back)
         {
-            b.Width = 100;
+            b.Width = 110;
             b.Height = 30;
             b.BackColor = back;
             b.ForeColor = Color.White;
@@ -199,13 +262,10 @@ namespace LibraryMS.Win.Pages
 
         private void EnsureFormLabels()
         {
-            // If labels already exist in col 0, do nothing
             var col0row0 = tblForm.GetControlFromPosition(0, 0);
             if (col0row0 is Label) return;
 
             tblForm.SuspendLayout();
-
-            // Rebuild table content: labels in col 0, controls in col 1
             tblForm.Controls.Clear();
 
             AddRow(0, "Code", txtCode);
@@ -216,7 +276,6 @@ namespace LibraryMS.Win.Pages
             AddRow(5, "Category", cmbCategoryForm);
             AddRow(6, "Price", numPrice);
 
-            // Active row
             tblForm.Controls.Add(new Label { Text = "", AutoSize = true }, 0, 7);
 
             chkActive.Text = "Active";

@@ -129,7 +129,9 @@ namespace LibraryMS.DAL.Repositories
                                     U_FAIL_COUNT = 0,
                                     U_LOCKED = 0,
                                     U_LOCKED_AT = NULL,
+                                    U_GRACEDATE = 0
                                     M_DATE = SYSDATETIME()
+                                    U_TEMPDATETIME = SYSDATETIME()
                                 WHERE U_CODE = (SELECT PR_USERCODE FROM dbo.T_TBLPWDRESETREQ WHERE PR_ID=@I AND PR_STATUS='P');
 
                                 IF @@ROWCOUNT = 0

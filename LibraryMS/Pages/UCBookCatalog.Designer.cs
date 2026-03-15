@@ -17,7 +17,6 @@ namespace LibraryMS.Win.Pages
         private Label lblTitle;
         private FlowLayoutPanel flpFilters;
 
-        // header/filter controls (names must match)
         private Label lblSearch;
         private TextBox txtSearch;
         private Label lblCat;
@@ -25,16 +24,14 @@ namespace LibraryMS.Win.Pages
         private CheckBox chkActiveOnly;
         private Button btnSearch;
         private Button btnNew;
+        private Button btnUploadExcel;
 
-        // body
         private TableLayoutPanel tlpBody;
         private DataGridView dgvBooks;
 
-        // form (right)
         private GroupBox grpForm;
         private TableLayoutPanel tblForm;
 
-        // form controls (names must match)
         private TextBox txtCode;
         private TextBox txtTitle;
         private TextBox txtAuthor;
@@ -66,6 +63,7 @@ namespace LibraryMS.Win.Pages
             chkActiveOnly = new CheckBox();
             btnSearch = new Button();
             btnNew = new Button();
+            btnUploadExcel = new Button();
             tlpBody = new TableLayoutPanel();
             dgvBooks = new DataGridView();
             grpForm = new GroupBox();
@@ -97,7 +95,7 @@ namespace LibraryMS.Win.Pages
             panelRoot.Dock = DockStyle.Fill;
             panelRoot.Location = new Point(0, 0);
             panelRoot.Name = "panelRoot";
-            panelRoot.Size = new Size(900, 600);
+            panelRoot.Size = new Size(980, 600);
             panelRoot.TabIndex = 0;
             // 
             // gbCatalog
@@ -107,7 +105,7 @@ namespace LibraryMS.Win.Pages
             gbCatalog.Location = new Point(0, 0);
             gbCatalog.Name = "gbCatalog";
             gbCatalog.Padding = new Padding(10);
-            gbCatalog.Size = new Size(900, 600);
+            gbCatalog.Size = new Size(980, 600);
             gbCatalog.TabIndex = 0;
             gbCatalog.TabStop = false;
             gbCatalog.Text = "Book Catalog";
@@ -124,7 +122,7 @@ namespace LibraryMS.Win.Pages
             tlpRoot.RowCount = 2;
             tlpRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
             tlpRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tlpRoot.Size = new Size(880, 564);
+            tlpRoot.Size = new Size(960, 564);
             tlpRoot.TabIndex = 0;
             // 
             // tlpHeader
@@ -140,7 +138,7 @@ namespace LibraryMS.Win.Pages
             tlpHeader.Padding = new Padding(6, 10, 6, 0);
             tlpHeader.RowCount = 1;
             tlpHeader.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tlpHeader.Size = new Size(874, 50);
+            tlpHeader.Size = new Size(954, 50);
             tlpHeader.TabIndex = 0;
             // 
             // lblTitle
@@ -150,7 +148,7 @@ namespace LibraryMS.Win.Pages
             lblTitle.ForeColor = Color.Teal;
             lblTitle.Location = new Point(9, 10);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new Size(90, 40);
+            lblTitle.Size = new Size(14, 40);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Book Catalog";
             lblTitle.TextAlign = ContentAlignment.MiddleLeft;
@@ -166,11 +164,12 @@ namespace LibraryMS.Win.Pages
             flpFilters.Controls.Add(chkActiveOnly);
             flpFilters.Controls.Add(btnSearch);
             flpFilters.Controls.Add(btnNew);
+            flpFilters.Controls.Add(btnUploadExcel);
             flpFilters.Dock = DockStyle.Fill;
-            flpFilters.Location = new Point(102, 10);
+            flpFilters.Location = new Point(26, 10);
             flpFilters.Margin = new Padding(0);
             flpFilters.Name = "flpFilters";
-            flpFilters.Size = new Size(766, 40);
+            flpFilters.Size = new Size(922, 40);
             flpFilters.TabIndex = 1;
             flpFilters.WrapContents = false;
             // 
@@ -226,15 +225,22 @@ namespace LibraryMS.Win.Pages
             // 
             btnSearch.Location = new Point(607, 3);
             btnSearch.Name = "btnSearch";
-            btnSearch.Size = new Size(75, 23);
+            btnSearch.Size = new Size(90, 30);
             btnSearch.TabIndex = 5;
             // 
             // btnNew
             // 
-            btnNew.Location = new Point(688, 3);
+            btnNew.Location = new Point(703, 3);
             btnNew.Name = "btnNew";
-            btnNew.Size = new Size(75, 23);
+            btnNew.Size = new Size(90, 30);
             btnNew.TabIndex = 6;
+            // 
+            // btnUploadExcel
+            // 
+            btnUploadExcel.Location = new Point(799, 3);
+            btnUploadExcel.Name = "btnUploadExcel";
+            btnUploadExcel.Size = new Size(120, 30);
+            btnUploadExcel.TabIndex = 7;
             // 
             // tlpBody
             // 
@@ -248,7 +254,7 @@ namespace LibraryMS.Win.Pages
             tlpBody.Name = "tlpBody";
             tlpBody.RowCount = 1;
             tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tlpBody.Size = new Size(874, 502);
+            tlpBody.Size = new Size(954, 502);
             tlpBody.TabIndex = 1;
             // 
             // dgvBooks
@@ -261,17 +267,17 @@ namespace LibraryMS.Win.Pages
             dgvBooks.Name = "dgvBooks";
             dgvBooks.RowHeadersVisible = false;
             dgvBooks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvBooks.Size = new Size(588, 496);
+            dgvBooks.Size = new Size(642, 496);
             dgvBooks.TabIndex = 0;
             // 
             // grpForm
             // 
             grpForm.Controls.Add(tblForm);
             grpForm.Dock = DockStyle.Fill;
-            grpForm.Location = new Point(597, 3);
+            grpForm.Location = new Point(651, 3);
             grpForm.Name = "grpForm";
             grpForm.Padding = new Padding(10);
-            grpForm.Size = new Size(274, 496);
+            grpForm.Size = new Size(300, 496);
             grpForm.TabIndex = 1;
             grpForm.TabStop = false;
             grpForm.Text = "Book Details";
@@ -301,63 +307,63 @@ namespace LibraryMS.Win.Pages
             tblForm.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
             tblForm.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
             tblForm.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tblForm.Size = new Size(254, 460);
+            tblForm.Size = new Size(280, 460);
             tblForm.TabIndex = 0;
             // 
             // txtCode
             // 
             txtCode.Dock = DockStyle.Fill;
-            txtCode.Location = new Point(91, 3);
+            txtCode.Location = new Point(101, 3);
             txtCode.Name = "txtCode";
-            txtCode.Size = new Size(160, 23);
+            txtCode.Size = new Size(176, 23);
             txtCode.TabIndex = 0;
             // 
             // txtTitle
             // 
             txtTitle.Dock = DockStyle.Fill;
-            txtTitle.Location = new Point(91, 33);
+            txtTitle.Location = new Point(101, 33);
             txtTitle.Name = "txtTitle";
-            txtTitle.Size = new Size(160, 23);
+            txtTitle.Size = new Size(176, 23);
             txtTitle.TabIndex = 1;
             // 
             // txtAuthor
             // 
             txtAuthor.Dock = DockStyle.Fill;
-            txtAuthor.Location = new Point(91, 63);
+            txtAuthor.Location = new Point(101, 63);
             txtAuthor.Name = "txtAuthor";
-            txtAuthor.Size = new Size(160, 23);
+            txtAuthor.Size = new Size(176, 23);
             txtAuthor.TabIndex = 2;
             // 
             // txtPublisher
             // 
             txtPublisher.Dock = DockStyle.Fill;
-            txtPublisher.Location = new Point(91, 93);
+            txtPublisher.Location = new Point(101, 93);
             txtPublisher.Name = "txtPublisher";
-            txtPublisher.Size = new Size(160, 23);
+            txtPublisher.Size = new Size(176, 23);
             txtPublisher.TabIndex = 3;
             // 
             // txtIsbn
             // 
             txtIsbn.Dock = DockStyle.Fill;
-            txtIsbn.Location = new Point(91, 123);
+            txtIsbn.Location = new Point(101, 123);
             txtIsbn.Name = "txtIsbn";
-            txtIsbn.Size = new Size(160, 23);
+            txtIsbn.Size = new Size(176, 23);
             txtIsbn.TabIndex = 4;
             // 
             // cmbCategoryForm
             // 
             cmbCategoryForm.Dock = DockStyle.Fill;
             cmbCategoryForm.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbCategoryForm.Location = new Point(91, 153);
+            cmbCategoryForm.Location = new Point(101, 153);
             cmbCategoryForm.Name = "cmbCategoryForm";
-            cmbCategoryForm.Size = new Size(160, 23);
+            cmbCategoryForm.Size = new Size(176, 23);
             cmbCategoryForm.TabIndex = 5;
             // 
             // numPrice
             // 
             numPrice.DecimalPlaces = 2;
             numPrice.Dock = DockStyle.Left;
-            numPrice.Location = new Point(91, 183);
+            numPrice.Location = new Point(101, 183);
             numPrice.Maximum = new decimal(new int[] { 100000000, 0, 0, 0 });
             numPrice.Name = "numPrice";
             numPrice.Size = new Size(140, 23);
@@ -366,7 +372,7 @@ namespace LibraryMS.Win.Pages
             // chkActive
             // 
             chkActive.AutoSize = true;
-            chkActive.Location = new Point(91, 215);
+            chkActive.Location = new Point(101, 215);
             chkActive.Margin = new Padding(3, 5, 3, 3);
             chkActive.Name = "chkActive";
             chkActive.Size = new Size(59, 19);
@@ -379,7 +385,7 @@ namespace LibraryMS.Win.Pages
             AutoScaleMode = AutoScaleMode.Font;
             Controls.Add(panelRoot);
             Name = "UCBookCatalog";
-            Size = new Size(900, 600);
+            Size = new Size(980, 600);
             panelRoot.ResumeLayout(false);
             gbCatalog.ResumeLayout(false);
             tlpRoot.ResumeLayout(false);

@@ -37,18 +37,33 @@ namespace LibraryMS.Win.Pages
         {
             ReadOnly = true,
             Multiline = true,
-            ScrollBars = ScrollBars.Vertical
+            ScrollBars = ScrollBars.Vertical,
+            WordWrap = true
         };
 
         private readonly TextBox txtCalculation = new()
         {
             ReadOnly = true,
             Multiline = true,
-            ScrollBars = ScrollBars.Vertical
+            ScrollBars = ScrollBars.Vertical,
+            WordWrap = true
         };
 
         private readonly Button btnHelp = new();
         private readonly Button btnClearForm = new();
+
+        // responsive layout fields
+        private readonly GroupBox gbMain = new();
+        private readonly TableLayoutPanel tlpRoot = new();
+        private readonly TableLayoutPanel tlpHeader = new();
+        private readonly FlowLayoutPanel flpHeaderActions = new();
+        private readonly TableLayoutPanel tlpBody = new();
+
+        private readonly GroupBox grpPendingFines = new();
+        private readonly GroupBox grpFineEntry = new();
+
+        private readonly TableLayoutPanel tlpForm = new();
+        private readonly FlowLayoutPanel flpBottomButtons = new();
 
         public UCFineCollection(FineCollectionService fines)
         {
@@ -57,7 +72,9 @@ namespace LibraryMS.Win.Pages
             Dock = DockStyle.Fill;
             BuildUi();
             WireEvents();
+            ApplyResponsiveLayout();
 
+            Resize += (_, __) => ApplyResponsiveLayout();
             Load += async (_, __) => await OnRefreshAsync();
         }
 
@@ -72,9 +89,23 @@ namespace LibraryMS.Win.Pages
 
         public async Task OnSaveAsync()
         {
-            if (AppSession.Current == null) { MessageBox.Show("Session missing."); return; }
-            if (string.IsNullOrWhiteSpace(txtFineDoc.Text)) { MessageBox.Show("Select a fine."); return; }
-            if (numPayAmount.Value <= 0) { MessageBox.Show("Enter pay amount."); return; }
+            if (AppSession.Current == null)
+            {
+                MessageBox.Show("Session missing.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtFineDoc.Text))
+            {
+                MessageBox.Show("Select a fine.");
+                return;
+            }
+
+            if (numPayAmount.Value <= 0)
+            {
+                MessageBox.Show("Enter pay amount.");
+                return;
+            }
 
             try
             {
@@ -90,8 +121,11 @@ namespace LibraryMS.Win.Pages
 
                 await _fines.PayAsync(dto);
 
-                MessageBox.Show("Fine payment saved.", "Success",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    "Fine payment saved.",
+                    "Success",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
 
                 await OnRefreshAsync();
             }
@@ -103,14 +137,32 @@ namespace LibraryMS.Win.Pages
 
         public async Task OnProcessAsync()
         {
-            if (AppSession.Current == null) { MessageBox.Show("Session missing."); return; }
-            if (string.IsNullOrWhiteSpace(txtFineDoc.Text)) { MessageBox.Show("Select a fine."); return; }
-            if (numPayAmount.Value <= 0) { MessageBox.Show("Enter refund amount in Amount field."); return; }
+            if (AppSession.Current == null)
+            {
+                MessageBox.Show("Session missing.");
+                return;
+            }
 
-            var ok = MessageBox.Show("Refund this fine amount?", "Refund",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (string.IsNullOrWhiteSpace(txtFineDoc.Text))
+            {
+                MessageBox.Show("Select a fine.");
+                return;
+            }
 
-            if (ok != DialogResult.Yes) return;
+            if (numPayAmount.Value <= 0)
+            {
+                MessageBox.Show("Enter refund amount in Amount field.");
+                return;
+            }
+
+            var ok = MessageBox.Show(
+                "Refund this fine amount?",
+                "Refund",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (ok != DialogResult.Yes)
+                return;
 
             try
             {
@@ -126,8 +178,11 @@ namespace LibraryMS.Win.Pages
 
                 await _fines.RefundAsync(dto);
 
-                MessageBox.Show("Refund saved.", "Success",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    "Refund saved.",
+                    "Success",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
 
                 await OnRefreshAsync();
             }
@@ -144,7 +199,8 @@ namespace LibraryMS.Win.Pages
 
         private async Task BindSelectedFineAsync()
         {
-            if (dgvFines.CurrentRow?.DataBoundItem is not MemberFineRowDto row) return;
+            if (dgvFines.CurrentRow?.DataBoundItem is not MemberFineRowDto row)
+                return;
 
             txtFineDoc.Text = row.FineDocNo;
             txtMemberCode.Text = row.MemberCode;
@@ -195,6 +251,7 @@ namespace LibraryMS.Win.Pages
             txtPurpose.Clear();
             txtCalculation.Clear();
             numPayAmount.Value = 0;
+
             if (cmbPayMode.Items.Count > 0)
                 cmbPayMode.SelectedIndex = 0;
         }
@@ -202,7 +259,7 @@ namespace LibraryMS.Win.Pages
         private void ShowHelp()
         {
             var helpText =
-@"Fine Status Codes
+                @"Fine Status Codes
 P = Pending
 T = Partially Paid
 D = Paid
@@ -222,8 +279,11 @@ O = Overdue
 D = Damaged
 L = Lost";
 
-            MessageBox.Show(helpText, "Fine Collection Help",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            MessageBox.Show(
+                helpText,
+                "Fine Collection Help",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
         }
 
         private static string FineTypeMeaning(string code) => (code ?? "").Trim().ToUpperInvariant() switch
@@ -245,307 +305,147 @@ L = Lost";
                 await LoadFinesAsync();
             };
 
+            txtSearch.KeyDown += async (_, e) =>
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    e.Handled = true;
+                    e.SuppressKeyPress = true;
+                    await LoadFinesAsync();
+                }
+            };
+
             dgvFines.SelectionChanged += async (_, __) => await BindSelectedFineAsync();
 
             btnHelp.Click += (_, __) => ShowHelp();
             btnClearForm.Click += (_, __) => ClearEntry();
         }
 
-        //private void BuildUi()
-        //{
-        //    BackColor = Color.PapayaWhip;
-
-        //    cmbPayMode.Items.AddRange(new object[] { "CASH", "CARD", "ONLINE" });
-        //    cmbPayMode.SelectedIndex = 0;
-
-        //    var gb = new GroupBox
-        //    {
-        //        Dock = DockStyle.Fill,
-        //        Padding = new Padding(10),
-        //        Text = "Fine Collection"
-        //    };
-        //    Controls.Add(gb);
-
-        //    var root = new TableLayoutPanel
-        //    {
-        //        Dock = DockStyle.Fill,
-        //        RowCount = 2
-        //    };
-        //    root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
-        //    root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-        //    gb.Controls.Add(root);
-
-        //    var header = new TableLayoutPanel
-        //    {
-        //        Dock = DockStyle.Fill,
-        //        ColumnCount = 2,
-        //        Padding = new Padding(6, 10, 6, 0)
-        //    };
-        //    header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        //    header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-
-        //    lblTitle.Dock = DockStyle.Fill;
-        //    lblTitle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-        //    lblTitle.ForeColor = Color.Teal;
-        //    lblTitle.TextAlign = ContentAlignment.MiddleLeft;
-
-        //    var flp = new FlowLayoutPanel
-        //    {
-        //        AutoSize = true,
-        //        WrapContents = false,
-        //        Dock = DockStyle.Fill,
-        //        Margin = new Padding(0)
-        //    };
-
-        //    flp.Controls.Add(new Label
-        //    {
-        //        Text = "Fine Search:",
-        //        AutoSize = true,
-        //        Padding = new Padding(0, 7, 0, 0)
-        //    });
-
-        //    flp.Controls.Add(txtSearch);
-
-        //    SetupBtn(btnSearch, "Search", Color.SteelBlue);
-        //    SetupBtn(btnClearSearch, "Clear", Color.DimGray);
-
-        //    btnSearch.Width = 90;
-        //    btnClearSearch.Width = 90;
-
-        //    flp.Controls.Add(btnSearch);
-        //    flp.Controls.Add(btnClearSearch);
-
-        //    header.Controls.Add(lblTitle, 0, 0);
-        //    header.Controls.Add(flp, 1, 0);
-
-        //    root.Controls.Add(header, 0, 0);
-
-        //    var body = new TableLayoutPanel
-        //    {
-        //        Dock = DockStyle.Fill,
-        //        ColumnCount = 2
-        //    };
-        //    body.ColumnStyles.Clear();
-        //    body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-        //    body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 430F));
-        //    root.Controls.Add(body, 0, 1);
-
-        //    SetupGrid(dgvFines);
-
-        //    body.Controls.Add(new GroupBox
-        //    {
-        //        Dock = DockStyle.Fill,
-        //        Text = "Pending Fines",
-        //        Controls = { dgvFines }
-        //    }, 0, 0);
-
-        //    var right = new GroupBox
-        //    {
-        //        Dock = DockStyle.Fill,
-        //        Text = "Fine Payment / Refund"
-        //    };
-
-        //    var form = new TableLayoutPanel
-        //    {
-        //        Dock = DockStyle.Fill,
-        //        ColumnCount = 2,
-        //        Padding = new Padding(10)
-        //    };
-        //    form.ColumnStyles.Clear();
-        //    form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
-        //    form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-
-        //    form.RowStyles.Clear();
-        //    for (int i = 0; i < 10; i++)
-        //        form.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-
-        //    form.RowStyles.Add(new RowStyle(SizeType.Absolute, 65F));   // Purpose
-        //    form.RowStyles.Add(new RowStyle(SizeType.Absolute, 125F));  // Calculation
-        //    form.RowStyles.Add(new RowStyle(SizeType.Absolute, 42F));   // Bottom buttons
-        //    form.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));   // filler
-
-        //    AddRow(form, 0, "Fine Doc", txtFineDoc);
-        //    AddRow(form, 1, "Member", txtMemberCode);
-        //    AddRow(form, 2, "Ref Doc", txtRefDoc);
-        //    AddRow(form, 3, "Total", txtTotal);
-        //    AddRow(form, 4, "Paid", txtPaid);
-        //    AddRow(form, 5, "Balance", txtBalance);
-        //    AddRow(form, 6, "Amount", numPayAmount);
-        //    AddRow(form, 7, "Pay Mode", cmbPayMode);
-        //    AddRow(form, 8, "Ref No", txtRefNo);
-        //    AddRow(form, 9, "Remark", txtRemark);
-        //    AddRow(form, 10, "Purpose", txtPurpose);
-        //    AddRow(form, 11, "Calculation", txtCalculation);
-
-        //    SetupBtn(btnHelp, "Help", Color.SlateGray);
-        //    SetupBtn(btnClearForm, "Clear", Color.DimGray);
-
-        //    btnHelp.Dock = DockStyle.Fill;
-        //    btnClearForm.Dock = DockStyle.Fill;
-
-        //    btnHelp.Margin = new Padding(0, 0, 6, 0);
-        //    btnClearForm.Margin = new Padding(0);
-
-        //    var bottomButtons = new TableLayoutPanel
-        //    {
-        //        Dock = DockStyle.Top,
-        //        Height = 34,
-        //        ColumnCount = 2,
-        //        RowCount = 1,
-        //        Margin = new Padding(0),
-        //        Padding = new Padding(0)
-        //    };
-
-        //    bottomButtons.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
-        //    bottomButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-        //    bottomButtons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-
-        //    bottomButtons.Controls.Add(btnHelp, 0, 0);
-        //    bottomButtons.Controls.Add(btnClearForm, 1, 0);
-
-        //    form.Controls.Add(new Label
-        //    {
-        //        Text = "Help / Clear",
-        //        AutoSize = true,
-        //        Padding = new Padding(0, 6, 0, 0)
-        //    }, 0, 12);
-
-        //    form.Controls.Add(bottomButtons, 1, 12);
-
-        //    right.Controls.Add(form);
-        //    body.Controls.Add(right, 1, 0);
-        //}
         private void BuildUi()
         {
-            BackColor = Color.PapayaWhip;
+            SuspendLayout();
 
+            BackColor = Color.PapayaWhip;
+            Controls.Clear();
+
+            cmbPayMode.Items.Clear();
             cmbPayMode.Items.AddRange(new object[] { "CASH", "CARD", "ONLINE" });
             cmbPayMode.SelectedIndex = 0;
 
-            var gb = new GroupBox
-            {
-                Dock = DockStyle.Fill,
-                Padding = new Padding(10),
-                Text = "Fine Collection"
-            };
-            Controls.Add(gb);
+            txtRemark.Multiline = true;
+            txtRemark.Height = 60;
+            txtRemark.ScrollBars = ScrollBars.Vertical;
 
-            var root = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                RowCount = 2
-            };
-            root.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
-            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            gb.Controls.Add(root);
+            gbMain.Dock = DockStyle.Fill;
+            gbMain.Padding = new Padding(10);
+            gbMain.Text = "Fine Collection";
+            Controls.Add(gbMain);
 
-            var header = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                Padding = new Padding(6, 10, 6, 0)
-            };
-            header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            // root
+            tlpRoot.Dock = DockStyle.Fill;
+            tlpRoot.Margin = new Padding(0);
+            tlpRoot.Padding = new Padding(0);
+            tlpRoot.ColumnCount = 1;
+            tlpRoot.RowCount = 2;
+            tlpRoot.ColumnStyles.Clear();
+            tlpRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpRoot.RowStyles.Clear();
+            tlpRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            tlpRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            gbMain.Controls.Add(tlpRoot);
+
+            // header
+            tlpHeader.Dock = DockStyle.Top;
+            tlpHeader.AutoSize = true;
+            tlpHeader.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            tlpHeader.Margin = new Padding(0);
+            tlpHeader.Padding = new Padding(8, 10, 8, 6);
 
             lblTitle.Dock = DockStyle.Fill;
             lblTitle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             lblTitle.ForeColor = Color.Teal;
             lblTitle.TextAlign = ContentAlignment.MiddleLeft;
 
-            var flp = new FlowLayoutPanel
-            {
-                AutoSize = true,
-                WrapContents = false,
-                Dock = DockStyle.Fill,
-                Margin = new Padding(0)
-            };
+            flpHeaderActions.AutoSize = true;
+            flpHeaderActions.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            flpHeaderActions.FlowDirection = FlowDirection.LeftToRight;
+            flpHeaderActions.WrapContents = true;
+            flpHeaderActions.Margin = new Padding(0);
+            flpHeaderActions.Padding = new Padding(0);
 
-            flp.Controls.Add(new Label
+            flpHeaderActions.Controls.Add(new Label
             {
                 Text = "Fine Search:",
                 AutoSize = true,
-                Padding = new Padding(0, 7, 0, 0)
+                Padding = new Padding(0, 7, 0, 0),
+                Margin = new Padding(0, 0, 8, 0)
             });
 
-            flp.Controls.Add(txtSearch);
+            txtSearch.Width = 220;
+            txtSearch.Margin = new Padding(0, 0, 8, 0);
 
             SetupBtn(btnSearch, "Search", Color.SteelBlue);
             SetupBtn(btnClearSearch, "Clear", Color.DimGray);
 
-            btnSearch.Width = 90;
-            btnClearSearch.Width = 90;
+            btnSearch.Margin = new Padding(0, 0, 8, 0);
+            btnClearSearch.Margin = new Padding(0);
 
-            flp.Controls.Add(btnSearch);
-            flp.Controls.Add(btnClearSearch);
+            flpHeaderActions.Controls.Add(txtSearch);
+            flpHeaderActions.Controls.Add(btnSearch);
+            flpHeaderActions.Controls.Add(btnClearSearch);
 
-            header.Controls.Add(lblTitle, 0, 0);
-            header.Controls.Add(flp, 1, 0);
+            tlpRoot.Controls.Add(tlpHeader, 0, 0);
 
-            root.Controls.Add(header, 0, 0);
-
-            var body = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                Margin = new Padding(0)
-            };
-            body.ColumnStyles.Clear();
-            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62F));
-            body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38F));
-            root.Controls.Add(body, 0, 1);
+            // body
+            tlpBody.Dock = DockStyle.Fill;
+            tlpBody.Margin = new Padding(0);
+            tlpBody.Padding = new Padding(0);
+            tlpRoot.Controls.Add(tlpBody, 0, 1);
 
             SetupGrid(dgvFines);
 
-            var leftGroup = new GroupBox
-            {
-                Dock = DockStyle.Fill,
-                Text = "Pending Fines",
-                Padding = new Padding(6)
-            };
-            leftGroup.Controls.Add(dgvFines);
-            body.Controls.Add(leftGroup, 0, 0);
+            grpPendingFines.Dock = DockStyle.Fill;
+            grpPendingFines.Text = "Pending Fines";
+            grpPendingFines.Padding = new Padding(6);
+            grpPendingFines.Margin = new Padding(3);
+            grpPendingFines.Controls.Add(dgvFines);
 
-            var right = new GroupBox
-            {
-                Dock = DockStyle.Fill,
-                Text = "Fine Payment / Refund",
-                Padding = new Padding(6),
-                MinimumSize = new Size(360, 0)
-            };
+            grpFineEntry.Dock = DockStyle.Fill;
+            grpFineEntry.Text = "Fine Payment / Refund";
+            grpFineEntry.Padding = new Padding(6);
+            grpFineEntry.Margin = new Padding(3);
 
-            var form = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 2,
-                Padding = new Padding(10),
-                AutoScroll = true
-            };
-            form.ColumnStyles.Clear();
-            form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
-            form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpForm.Dock = DockStyle.Fill;
+            tlpForm.ColumnCount = 2;
+            tlpForm.Padding = new Padding(10);
+            tlpForm.Margin = new Padding(0);
+            tlpForm.AutoScroll = true;
+            tlpForm.ColumnStyles.Clear();
+            tlpForm.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
+            tlpForm.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
 
-            form.RowStyles.Clear();
-            for (int i = 0; i < 10; i++)
-                form.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+            tlpForm.RowStyles.Clear();
+            for (int i = 0; i < 9; i++)
+                tlpForm.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
 
-            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 80F));     // Purpose
-            form.RowStyles.Add(new RowStyle(SizeType.Absolute, 140F));    // Calculation
-            form.RowStyles.Add(new RowStyle(SizeType.AutoSize));          // Bottom buttons
-            form.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));     // filler
+            tlpForm.RowStyles.Add(new RowStyle(SizeType.Absolute, 72F));   // Remark
+            tlpForm.RowStyles.Add(new RowStyle(SizeType.Absolute, 80F));   // Purpose
+            tlpForm.RowStyles.Add(new RowStyle(SizeType.Absolute, 140F));  // Calculation
+            tlpForm.RowStyles.Add(new RowStyle(SizeType.AutoSize));        // Buttons
+            tlpForm.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));   // filler
 
-            AddRow(form, 0, "Fine Doc", txtFineDoc);
-            AddRow(form, 1, "Member", txtMemberCode);
-            AddRow(form, 2, "Ref Doc", txtRefDoc);
-            AddRow(form, 3, "Total", txtTotal);
-            AddRow(form, 4, "Paid", txtPaid);
-            AddRow(form, 5, "Balance", txtBalance);
-            AddRow(form, 6, "Amount", numPayAmount);
-            AddRow(form, 7, "Pay Mode", cmbPayMode);
-            AddRow(form, 8, "Ref No", txtRefNo);
-            AddRow(form, 9, "Remark", txtRemark);
-            AddRow(form, 10, "Purpose", txtPurpose);
-            AddRow(form, 11, "Calculation", txtCalculation);
+            AddRow(tlpForm, 0, "Fine Doc", txtFineDoc);
+            AddRow(tlpForm, 1, "Member", txtMemberCode);
+            AddRow(tlpForm, 2, "Ref Doc", txtRefDoc);
+            AddRow(tlpForm, 3, "Total", txtTotal);
+            AddRow(tlpForm, 4, "Paid", txtPaid);
+            AddRow(tlpForm, 5, "Balance", txtBalance);
+            AddRow(tlpForm, 6, "Amount", numPayAmount);
+            AddRow(tlpForm, 7, "Pay Mode", cmbPayMode);
+            AddRow(tlpForm, 8, "Ref No", txtRefNo);
+            AddRow(tlpForm, 9, "Remark", txtRemark);
+            AddRow(tlpForm, 10, "Purpose", txtPurpose);
+            AddRow(tlpForm, 11, "Calculation", txtCalculation);
 
             SetupBtn(btnHelp, "Help", Color.SlateGray);
             SetupBtn(btnClearForm, "Clear", Color.DimGray);
@@ -558,21 +458,18 @@ L = Lost";
             btnClearForm.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             btnClearForm.Margin = new Padding(0, 0, 0, 8);
 
-            var bottomButtons = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = true,
-                AutoSize = true,
-                AutoSizeMode = AutoSizeMode.GrowAndShrink,
-                Margin = new Padding(0),
-                Padding = new Padding(0)
-            };
+            flpBottomButtons.Dock = DockStyle.Fill;
+            flpBottomButtons.FlowDirection = FlowDirection.LeftToRight;
+            flpBottomButtons.WrapContents = true;
+            flpBottomButtons.AutoSize = true;
+            flpBottomButtons.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            flpBottomButtons.Margin = new Padding(0);
+            flpBottomButtons.Padding = new Padding(0);
 
-            bottomButtons.Controls.Add(btnHelp);
-            bottomButtons.Controls.Add(btnClearForm);
+            flpBottomButtons.Controls.Add(btnHelp);
+            flpBottomButtons.Controls.Add(btnClearForm);
 
-            form.Controls.Add(new Label
+            tlpForm.Controls.Add(new Label
             {
                 Text = "Help / Clear",
                 AutoSize = true,
@@ -580,11 +477,103 @@ L = Lost";
                 Dock = DockStyle.Fill
             }, 0, 12);
 
-            form.Controls.Add(bottomButtons, 1, 12);
+            tlpForm.Controls.Add(flpBottomButtons, 1, 12);
 
-            right.Controls.Add(form);
-            body.Controls.Add(right, 1, 0);
+            grpFineEntry.Controls.Add(tlpForm);
+
+            ApplyResponsiveLayout();
+
+            ResumeLayout(true);
         }
+
+        private void ApplyResponsiveLayout()
+        {
+            if (IsDisposed)
+                return;
+
+            bool narrow = Width < 1100;
+
+            SuspendLayout();
+            tlpHeader.SuspendLayout();
+            tlpBody.SuspendLayout();
+
+            // header
+            tlpHeader.Controls.Clear();
+            tlpHeader.ColumnStyles.Clear();
+            tlpHeader.RowStyles.Clear();
+
+            if (narrow)
+            {
+                tlpHeader.ColumnCount = 1;
+                tlpHeader.RowCount = 2;
+
+                tlpHeader.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                tlpHeader.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tlpHeader.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+                lblTitle.Margin = new Padding(0, 0, 0, 6);
+                flpHeaderActions.Dock = DockStyle.Top;
+                flpHeaderActions.WrapContents = true;
+
+                tlpHeader.Controls.Add(lblTitle, 0, 0);
+                tlpHeader.Controls.Add(flpHeaderActions, 0, 1);
+            }
+            else
+            {
+                tlpHeader.ColumnCount = 2;
+                tlpHeader.RowCount = 1;
+
+                tlpHeader.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                tlpHeader.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                tlpHeader.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+                lblTitle.Margin = new Padding(0);
+                flpHeaderActions.Dock = DockStyle.Fill;
+                flpHeaderActions.WrapContents = false;
+
+                tlpHeader.Controls.Add(lblTitle, 0, 0);
+                tlpHeader.Controls.Add(flpHeaderActions, 1, 0);
+            }
+
+            // body
+            tlpBody.Controls.Clear();
+            tlpBody.ColumnStyles.Clear();
+            tlpBody.RowStyles.Clear();
+
+            if (narrow)
+            {
+                tlpBody.ColumnCount = 1;
+                tlpBody.RowCount = 2;
+
+                tlpBody.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 52F));
+                tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 48F));
+
+                grpFineEntry.MinimumSize = Size.Empty;
+
+                tlpBody.Controls.Add(grpPendingFines, 0, 0);
+                tlpBody.Controls.Add(grpFineEntry, 0, 1);
+            }
+            else
+            {
+                tlpBody.ColumnCount = 2;
+                tlpBody.RowCount = 1;
+
+                tlpBody.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 62F));
+                tlpBody.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 38F));
+                tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
+                grpFineEntry.MinimumSize = new Size(360, 0);
+
+                tlpBody.Controls.Add(grpPendingFines, 0, 0);
+                tlpBody.Controls.Add(grpFineEntry, 1, 0);
+            }
+
+            tlpBody.ResumeLayout(true);
+            tlpHeader.ResumeLayout(true);
+            ResumeLayout(true);
+        }
+
         private static void SetupGrid(DataGridView dgv)
         {
             dgv.Dock = DockStyle.Fill;

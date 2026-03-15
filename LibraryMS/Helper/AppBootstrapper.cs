@@ -52,6 +52,7 @@ namespace LibraryMS.Win.Helper
             var returnRepo = new BookReturnRepository(db);
             var fineRepo = new FineCollectionRepository(db);
             var reportRepo = new ReportRepository(db);
+            var subRenewalRepo = new SubscriptionRenewalApprovalRepository(db);
 
             // Services (BLL)
             var auth = new AuthService(userRepo, lockRepo);
@@ -64,7 +65,7 @@ namespace LibraryMS.Win.Helper
             var passwordResetService = new PasswordResetService(pwdReqRepo);
             var userLockService = new UserLockService(lockRepo);
             var resService = new BookReservationService(resRepo);
-            var regService = new RegistrationService(db, groupRepo, subRepo, locRepo, regRepo, approvalRepo);
+            var regService = new RegistrationService(db, groupRepo, subRepo, locRepo, regRepo, approvalRepo, userLookupRepo);
             var userLookupService = new UserLookupService(userLookupRepo);
             var loc = new LocationService(locRepo);
             var reservationsService = new BookReservationService(resRepo);
@@ -75,6 +76,7 @@ namespace LibraryMS.Win.Helper
             var returnService = new BookReturnService(returnRepo, fineCalculator);
             var fineService = new FineCollectionService(fineRepo);
             var reportService = new ReportService(reportRepo);
+            var subRenewalService = new SubscriptionRenewalApprovalService(subRenewalRepo);
 
             groupMenuService.EnsureAsync().GetAwaiter().GetResult();
             return new ServiceContainer(
@@ -97,7 +99,8 @@ namespace LibraryMS.Win.Helper
                 Borrows: borrowService,
                 Returns: returnService,
                 Fines: fineService,
-                Reports: reportService
+                Reports: reportService,
+                SubscriptionRenewals: subRenewalService
             );
         }
     }
@@ -122,6 +125,7 @@ namespace LibraryMS.Win.Helper
         BookBorrowService Borrows,
         BookReturnService Returns,
         FineCollectionService Fines,
-        ReportService Reports
+        ReportService Reports,
+        SubscriptionRenewalApprovalService SubscriptionRenewals
     );
 }

@@ -23,6 +23,15 @@ namespace LibraryMS.Win.Pages
         private readonly DataGridView dgvH = new();
         private readonly DataGridView dgvD = new();
 
+        // responsive layout fields
+        private readonly GroupBox gbMain = new();
+        private readonly TableLayoutPanel tlpRoot = new();
+        private readonly TableLayoutPanel tlpHeader = new();
+        private readonly FlowLayoutPanel flpActions = new();
+        private readonly TableLayoutPanel tlpBody = new();
+        private readonly GroupBox grpTransfers = new();
+        private readonly GroupBox grpDetails = new();
+
         public UCBookTransferApprovals(BookTransferService svc)
         {
             _svc = svc ?? throw new ArgumentNullException(nameof(svc));
@@ -30,7 +39,9 @@ namespace LibraryMS.Win.Pages
 
             BuildUi();
             WireEvents();
+            ApplyResponsiveLayout();
 
+            Resize += (_, __) => ApplyResponsiveLayout();
             Load += async (_, __) => await OnRefreshAsync();
         }
 
@@ -39,7 +50,11 @@ namespace LibraryMS.Win.Pages
 
         public async Task OnRefreshAsync()
         {
-            if (AppSession.Current == null) { MessageBox.Show("Session missing."); return; }
+            if (AppSession.Current == null)
+            {
+                MessageBox.Show("Session missing.");
+                return;
+            }
 
             lblTitle.Text = _loadAll ? $"All Transfers - {LocDesc}" : $"Pending Transfers - {LocDesc}";
             await LoadHeadersAsync();
@@ -48,23 +63,31 @@ namespace LibraryMS.Win.Pages
 
         public void OnEdit() { }
 
-        // Top SAVE -> Approve
         public Task OnSaveAsync() => ApproveSelectedAsync();
 
-        // Top PROCESS -> Reject
         public Task OnProcessAsync() => RejectSelectedAsync();
 
         private TransferHeaderRowDto? Selected => dgvH.CurrentRow?.DataBoundItem as TransferHeaderRowDto;
 
         private async Task LoadHeadersAsync()
         {
-            if (string.IsNullOrWhiteSpace(LocCode)) { dgvH.DataSource = null; return; }
+            if (string.IsNullOrWhiteSpace(LocCode))
+            {
+                dgvH.DataSource = null;
+                return;
+            }
+
             dgvH.DataSource = await _svc.GetPendingAsync(LocCode!, _loadAll);
         }
 
         private async Task LoadDetailsAsync()
         {
-            if (Selected == null) { dgvD.DataSource = null; return; }
+            if (Selected == null)
+            {
+                dgvD.DataSource = null;
+                return;
+            }
+
             dgvD.DataSource = await _svc.GetDetailsAsync(Selected.DocNo);
         }
 
@@ -79,16 +102,23 @@ namespace LibraryMS.Win.Pages
                 return;
             }
 
-            var ok = MessageBox.Show($"Approve transfer?\n\nDoc: {Selected.DocNo}\nFrom: {Selected.FromLoc}\nTo: {Selected.ToLoc}",
-                "Approve", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            var ok = MessageBox.Show(
+                $"Approve transfer?\n\nDoc: {Selected.DocNo}\nFrom: {Selected.FromLoc}\nTo: {Selected.ToLoc}",
+                "Approve",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
 
             if (ok != DialogResult.Yes) return;
 
             try
             {
                 await _svc.ApproveAsync(Selected.DocNo, AppSession.Current.UserCode);
-                MessageBox.Show("Approved. Inventory added to destination.", "Success",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                MessageBox.Show(
+                    "Approved. Inventory added to destination.",
+                    "Success",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
 
                 await LoadHeadersAsync();
                 dgvD.DataSource = null;
@@ -110,13 +140,21 @@ namespace LibraryMS.Win.Pages
                 return;
             }
 
-            var ok = MessageBox.Show($"Reject transfer?\n\nDoc: {Selected.DocNo}", "Reject",
-                MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            var ok = MessageBox.Show(
+                $"Reject transfer?\n\nDoc: {Selected.DocNo}",
+                "Reject",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
 
             if (ok != DialogResult.Yes) return;
 
             await _svc.RejectAsync(Selected.DocNo, AppSession.Current.UserCode, "Rejected by receiver");
-            MessageBox.Show("Rejected.", "Done", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            MessageBox.Show(
+                "Rejected.",
+                "Done",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
 
             await LoadHeadersAsync();
             dgvD.DataSource = null;
@@ -141,19 +179,34 @@ namespace LibraryMS.Win.Pages
 
         private void BuildUi()
         {
+            SuspendLayout();
+
             BackColor = Color.PapayaWhip;
+            Controls.Clear();
 
-            var gb = new GroupBox { Dock = DockStyle.Fill, Padding = new Padding(10), Text = "Transfer Approval Handling" };
-            Controls.Add(gb);
+            gbMain.Dock = DockStyle.Fill;
+            gbMain.Padding = new Padding(10);
+            gbMain.Text = "Transfer Approval Handling";
+            Controls.Add(gbMain);
 
-            var tlpRoot = new TableLayoutPanel { Dock = DockStyle.Fill, RowCount = 2 };
-            tlpRoot.RowStyles.Add(new RowStyle(SizeType.Absolute, 56F));
+            tlpRoot.Dock = DockStyle.Fill;
+            tlpRoot.ColumnCount = 1;
+            tlpRoot.RowCount = 2;
+            tlpRoot.Margin = new Padding(0);
+            tlpRoot.Padding = new Padding(0);
+            tlpRoot.ColumnStyles.Clear();
+            tlpRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpRoot.RowStyles.Clear();
+            tlpRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             tlpRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            gb.Controls.Add(tlpRoot);
+            gbMain.Controls.Add(tlpRoot);
 
-            var header = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Padding = new Padding(6, 10, 6, 0) };
-            header.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            header.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            // header
+            tlpHeader.Dock = DockStyle.Top;
+            tlpHeader.AutoSize = true;
+            tlpHeader.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            tlpHeader.Margin = new Padding(0);
+            tlpHeader.Padding = new Padding(6, 10, 6, 6);
 
             lblTitle.Dock = DockStyle.Fill;
             lblTitle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
@@ -161,32 +214,118 @@ namespace LibraryMS.Win.Pages
             lblTitle.TextAlign = ContentAlignment.MiddleLeft;
             lblTitle.Text = "Pending Transfers";
 
-            var flp = new FlowLayoutPanel { AutoSize = true, WrapContents = false, Dock = DockStyle.Fill, Margin = new Padding(0) };
+            flpActions.AutoSize = true;
+            flpActions.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            flpActions.FlowDirection = FlowDirection.LeftToRight;
+            flpActions.WrapContents = true;
+            flpActions.Dock = DockStyle.Fill;
+            flpActions.Margin = new Padding(0);
+            flpActions.Padding = new Padding(0);
+
             SetupBtn(btnRefresh, "Refresh", Color.SteelBlue);
             SetupBtn(btnLoadAll, "Load All", Color.DimGray);
             SetupBtn(btnApprove, "Approve", Color.SeaGreen);
             SetupBtn(btnReject, "Reject", Color.IndianRed);
 
-            flp.Controls.Add(btnRefresh);
-            flp.Controls.Add(btnLoadAll);
-            flp.Controls.Add(btnApprove);
-            flp.Controls.Add(btnReject);
+            flpActions.Controls.Add(btnRefresh);
+            flpActions.Controls.Add(btnLoadAll);
+            flpActions.Controls.Add(btnApprove);
+            flpActions.Controls.Add(btnReject);
 
-            header.Controls.Add(lblTitle, 0, 0);
-            header.Controls.Add(flp, 1, 0);
+            tlpRoot.Controls.Add(tlpHeader, 0, 0);
 
-            var body = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2 };
-            body.RowStyles.Add(new RowStyle(SizeType.Percent, 55F));
-            body.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
+            // body
+            tlpBody.Dock = DockStyle.Fill;
+            tlpBody.Margin = new Padding(0);
+            tlpBody.Padding = new Padding(0);
+            tlpRoot.Controls.Add(tlpBody, 0, 1);
 
             SetupGrid(dgvH);
             SetupGrid(dgvD);
 
-            body.Controls.Add(new GroupBox { Dock = DockStyle.Fill, Text = "Transfers", Controls = { dgvH } }, 0, 0);
-            body.Controls.Add(new GroupBox { Dock = DockStyle.Fill, Text = "Transfer Details", Controls = { dgvD } }, 0, 1);
+            grpTransfers.Dock = DockStyle.Fill;
+            grpTransfers.Text = "Transfers";
+            grpTransfers.Padding = new Padding(6);
+            grpTransfers.Margin = new Padding(3);
+            grpTransfers.Controls.Add(dgvH);
 
-            tlpRoot.Controls.Add(header, 0, 0);
-            tlpRoot.Controls.Add(body, 0, 1);
+            grpDetails.Dock = DockStyle.Fill;
+            grpDetails.Text = "Transfer Details";
+            grpDetails.Padding = new Padding(6);
+            grpDetails.Margin = new Padding(3);
+            grpDetails.Controls.Add(dgvD);
+
+            ApplyResponsiveLayout();
+
+            ResumeLayout(true);
+        }
+
+        private void ApplyResponsiveLayout()
+        {
+            if (IsDisposed)
+                return;
+
+            bool narrow = Width < 950;
+
+            SuspendLayout();
+            tlpHeader.SuspendLayout();
+            tlpBody.SuspendLayout();
+
+            // header layout
+            tlpHeader.Controls.Clear();
+            tlpHeader.ColumnStyles.Clear();
+            tlpHeader.RowStyles.Clear();
+
+            if (narrow)
+            {
+                tlpHeader.ColumnCount = 1;
+                tlpHeader.RowCount = 2;
+
+                tlpHeader.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                tlpHeader.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+                tlpHeader.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+                lblTitle.Margin = new Padding(0, 0, 0, 6);
+                flpActions.Dock = DockStyle.Top;
+                flpActions.WrapContents = true;
+
+                tlpHeader.Controls.Add(lblTitle, 0, 0);
+                tlpHeader.Controls.Add(flpActions, 0, 1);
+            }
+            else
+            {
+                tlpHeader.ColumnCount = 2;
+                tlpHeader.RowCount = 1;
+
+                tlpHeader.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                tlpHeader.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+                tlpHeader.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+                lblTitle.Margin = new Padding(0);
+                flpActions.Dock = DockStyle.Fill;
+                flpActions.WrapContents = false;
+
+                tlpHeader.Controls.Add(lblTitle, 0, 0);
+                tlpHeader.Controls.Add(flpActions, 1, 0);
+            }
+
+            // body layout
+            tlpBody.Controls.Clear();
+            tlpBody.ColumnStyles.Clear();
+            tlpBody.RowStyles.Clear();
+
+            tlpBody.ColumnCount = 1;
+            tlpBody.RowCount = 2;
+            tlpBody.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 55F));
+            tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 45F));
+
+            tlpBody.Controls.Add(grpTransfers, 0, 0);
+            tlpBody.Controls.Add(grpDetails, 0, 1);
+
+            tlpBody.ResumeLayout(true);
+            tlpHeader.ResumeLayout(true);
+            ResumeLayout(true);
         }
 
         private static void SetupGrid(DataGridView dgv)
@@ -208,13 +347,15 @@ namespace LibraryMS.Win.Pages
         {
             b.Text = text;
             b.Width = 100;
-            b.Height = 30;
+            b.Height = 36;
+            b.MinimumSize = new Size(95, 36);
             b.BackColor = back;
             b.ForeColor = Color.White;
             b.FlatStyle = FlatStyle.Flat;
             b.FlatAppearance.BorderSize = 0;
             b.Margin = new Padding(8, 0, 0, 0);
             b.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            b.TextAlign = ContentAlignment.MiddleCenter;
             b.UseVisualStyleBackColor = false;
         }
     }

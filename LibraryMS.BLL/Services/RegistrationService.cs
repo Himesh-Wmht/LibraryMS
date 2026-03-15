@@ -22,8 +22,9 @@ namespace LibraryMS.BLL.Services
         private readonly LocationRepository _locs;
         private readonly UserRegistrationRepository _reg;
         private readonly ApprovalRepository _approvals;
+        private readonly UserLookupRepository _userLookup;
 
-        public RegistrationService(SqlDb db, UserGroupRepository groups, SubscriptionRepository subs, LocationRepository locs, UserRegistrationRepository reg, ApprovalRepository approvals)
+        public RegistrationService(SqlDb db, UserGroupRepository groups, SubscriptionRepository subs, LocationRepository locs, UserRegistrationRepository reg, ApprovalRepository approvals, UserLookupRepository userLookup)
         {
             _db = db;
             _groups = groups;
@@ -31,6 +32,7 @@ namespace LibraryMS.BLL.Services
             _locs = locs;
             _reg = reg;
             _approvals = approvals;
+            _userLookup = userLookup;
         }
 
         public async Task<List<UserGroupItem>> GetGroupsAsync()
@@ -53,7 +55,8 @@ namespace LibraryMS.BLL.Services
                 .Select(x => new UserSearchItem(x.Code, x.Name))
                 .ToList();
 
-
+        public Task<List<LookupItemDto>> LookupUsersAsync(string? text)
+            => _userLookup.LookupUsersAsync(text);
         public async Task<(bool ok, string message)> RegisterAsync(UserRegistrationRequest req, string? registeredBy)
         {
             // Validate mandatory

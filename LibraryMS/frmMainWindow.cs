@@ -33,6 +33,7 @@ namespace LibraryMS.Win
         private readonly BookReturnService _bookReturnService;
         private readonly FineCollectionService _fineCollectionService;
         private readonly ReportService _reportService;
+        private readonly SubscriptionRenewalApprovalService _subscriptionRenewalService;
 
         // Top actions (we keep references for enabling/disabling if needed)
         private IconButton btnRefresh = null!;
@@ -42,9 +43,10 @@ namespace LibraryMS.Win
         private IconButton btnLogout = null!;
 
         public frmMainWindow(MenuService menuService, RegistrationService registrationService, ApprovalService approvalService, GroupMenuService groupMenuService, UserGroupRepository groupRepo, BookCatalogService bookCatalogService,BookInventoryService bookInventoryService, BookCategoryService bookCategoryService, PasswordResetService passwordResetService, UserLockService userLockService, BookReservationService reservationsService, UserLookupService userLookupService, BookTransferService bookTransfer, LocationLookupService locationLookupService, BookBorrowService bookBorrowService,
-BookReturnService bookReturnService, FineCollectionService fineCollectionService, ReportService reportService)
+BookReturnService bookReturnService, FineCollectionService fineCollectionService, ReportService reportService, SubscriptionRenewalApprovalService subscriptionRenewalService)
         {
             InitializeComponent();
+            AutoScaleMode = AutoScaleMode.Dpi;
 
             _menuService = menuService ?? throw new ArgumentNullException(nameof(menuService));
             _registrationService = registrationService;
@@ -64,6 +66,7 @@ BookReturnService bookReturnService, FineCollectionService fineCollectionService
             _bookReturnService = bookReturnService ?? throw new ArgumentNullException(nameof(bookReturnService));
             _fineCollectionService = fineCollectionService ?? throw new ArgumentNullException(nameof(fineCollectionService));
             _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+            _subscriptionRenewalService = subscriptionRenewalService ?? throw new ArgumentNullException(nameof(subscriptionRenewalService));
 
             // ---- SplitContainer standard layout ----
             splitContainer1.Dock = DockStyle.Fill;
@@ -93,6 +96,7 @@ BookReturnService bookReturnService, FineCollectionService fineCollectionService
 
             // Top bar
             BuildTopBar();
+            ConfigureSideMenu();
 
             // Single Load handler (clean)
             Load += async (_, __) =>
@@ -106,7 +110,178 @@ BookReturnService bookReturnService, FineCollectionService fineCollectionService
             _passwordResetService = passwordResetService;
             _locationLookupService = locationLookupService;
         }
+        private void ConfigureSideMenu()
+        {
+            tvMenus.BorderStyle = BorderStyle.None;
+            tvMenus.HideSelection = false;
+            tvMenus.FullRowSelect = true;
 
+            // remove old tree lines
+            tvMenus.ShowLines = false;
+            tvMenus.ShowPlusMinus = false;
+            tvMenus.ShowRootLines = false;
+
+            // spacing
+            tvMenus.ItemHeight = 34;
+            tvMenus.Indent = 20;
+
+            // colors
+            tvMenus.BackColor = Color.FromArgb(206, 177, 140);
+            tvMenus.ForeColor = Color.FromArgb(45, 32, 20);
+            tvMenus.Font = new Font("Segoe UI", 10f, FontStyle.Regular);
+
+            // custom draw
+            tvMenus.DrawMode = TreeViewDrawMode.OwnerDrawAll;
+            tvMenus.DrawNode += TvMenus_DrawNode;
+            tvMenus.NodeMouseClick += TvMenus_NodeMouseClick;
+        }
+        private void TvMenus_DrawNode(object? sender, DrawTreeNodeEventArgs e)
+        {
+            if (e.Node == null) return;
+
+            var g = e.Graphics;
+            g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+
+            bool isSelected = tvMenus.SelectedNode == e.Node;
+            bool isParent = e.Node.Nodes.Count > 0;
+
+            Rectangle fullRow = new Rectangle(
+                6,
+                e.Bounds.Top + 2,
+                tvMenus.ClientSize.Width - 12,
+                tvMenus.ItemHeight - 4
+            );
+
+            using (var bg = new SolidBrush(tvMenus.BackColor))
+                g.FillRectangle(bg, fullRow);
+
+            if (isParent)
+            {
+                // Parent header
+                int arrowX = 12 + (e.Node.Level * tvMenus.Indent);
+                int arrowY = fullRow.Top + (fullRow.Height / 2) - 4;
+
+                DrawChevron(g, arrowX, arrowY, e.Node.IsExpanded);
+
+                Rectangle textRect = new Rectangle(
+                    arrowX + 16,
+                    fullRow.Top,
+                    fullRow.Width - arrowX - 20,
+                    fullRow.Height
+                );
+
+                TextRenderer.DrawText(
+                    g,
+                    e.Node.Text.ToUpper(),
+                    new Font("Segoe UI", 10f, FontStyle.Bold),
+                    textRect,
+                    Color.FromArgb(28, 48, 60),
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter
+                );
+            }
+            else
+            {
+                int textX = 22 + (e.Node.Level * tvMenus.Indent);
+
+                Rectangle childRect = new Rectangle(
+                    textX - 6,
+                    fullRow.Top,
+                    tvMenus.ClientSize.Width - textX - 10,
+                    fullRow.Height
+                );
+
+                if (isSelected)
+                {
+                    using var fill = new SolidBrush(Color.FromArgb(241, 221, 196));
+                    using var pen = new Pen(Color.FromArgb(190, 155, 120));
+                    FillRoundedRectangle(g, fill, childRect, 8);
+                    DrawRoundedRectangle(g, pen, childRect, 8);
+
+                    // left highlight bar
+                    using var barBrush = new SolidBrush(Color.FromArgb(33, 57, 70));
+                    g.FillRectangle(barBrush, childRect.X, childRect.Y, 4, childRect.Height);
+                }
+
+                Rectangle textRect = new Rectangle(
+                    textX + 6,
+                    fullRow.Top,
+                    tvMenus.ClientSize.Width - textX - 20,
+                    fullRow.Height
+                );
+
+                TextRenderer.DrawText(
+                    g,
+                    e.Node.Text,
+                    new Font("Segoe UI", 9.75f, FontStyle.Regular),
+                    textRect,
+                    Color.FromArgb(40, 30, 20),
+                    TextFormatFlags.Left | TextFormatFlags.VerticalCenter
+                );
+            }
+        }
+        private void TvMenus_NodeMouseClick(object? sender, TreeNodeMouseClickEventArgs e)
+        {
+            tvMenus.SelectedNode = e.Node;
+
+            if (e.Node.Nodes.Count > 0)
+            {
+                if (e.Node.IsExpanded)
+                    e.Node.Collapse();
+                else
+                    e.Node.Expand();
+            }
+        }
+        private void DrawChevron(Graphics g, int x, int y, bool expanded)
+        {
+            Point[] points;
+
+            if (expanded)
+            {
+                points = new[]
+                {
+            new Point(x, y),
+            new Point(x + 8, y),
+            new Point(x + 4, y + 6)
+        };
+            }
+            else
+            {
+                points = new[]
+                {
+            new Point(x, y),
+            new Point(x, y + 8),
+            new Point(x + 6, y + 4)
+        };
+            }
+
+            using var brush = new SolidBrush(Color.FromArgb(70, 55, 40));
+            g.FillPolygon(brush, points);
+        }
+        private void FillRoundedRectangle(Graphics g, Brush brush, Rectangle rect, int radius)
+        {
+            using var path = RoundedRect(rect, radius);
+            g.FillPath(brush, path);
+        }
+
+        private void DrawRoundedRectangle(Graphics g, Pen pen, Rectangle rect, int radius)
+        {
+            using var path = RoundedRect(rect, radius);
+            g.DrawPath(pen, path);
+        }
+
+        private System.Drawing.Drawing2D.GraphicsPath RoundedRect(Rectangle bounds, int radius)
+        {
+            int d = radius * 2;
+            var path = new System.Drawing.Drawing2D.GraphicsPath();
+
+            path.AddArc(bounds.X, bounds.Y, d, d, 180, 90);
+            path.AddArc(bounds.Right - d, bounds.Y, d, d, 270, 90);
+            path.AddArc(bounds.Right - d, bounds.Bottom - d, d, d, 0, 90);
+            path.AddArc(bounds.X, bounds.Bottom - d, d, d, 90, 90);
+            path.CloseFigure();
+
+            return path;
+        }
         // ---------------- TOP BAR ----------------
 
         private void BuildTopBar()
@@ -451,6 +626,11 @@ BookReturnService bookReturnService, FineCollectionService fineCollectionService
                     useDates: true,
                     useTop: true
                 ));
+                return;
+            }
+            if (menu.Code == "M00030") // SUBSCRIPTION RENEWAL APPROVALS
+            {
+                ShowPage(new UCSubscriptionRenewalApprovals(_subscriptionRenewalService));
                 return;
             }
         }

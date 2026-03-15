@@ -303,5 +303,47 @@ namespace LibraryMS.DAL.Repositories
             decimal Amount,
             string? Remark
         );
+        public sealed class SubscriptionRenewalApprovalRowDto
+        {
+            public int SubId { get; set; }
+            public string UserCode { get; set; } = string.Empty;
+            public DateTime RenewalDate { get; set; }
+            public DateTime ExpiryDate { get; set; }
+            public string? RenewalStatus { get; set; }
+            public decimal PaidAmt { get; set; }
+            public decimal DueAmt { get; set; }
+            public decimal PayAmt { get; set; }
+            public DateTime MDate { get; set; }
+            public bool IsProcessed { get; set; }
+            public bool IsRejected { get; set; }
+            public string? Remark { get; set; }
+        }
+        public sealed class BookCatalogImportRowDto
+        {
+            public int ExcelRowNo { get; set; }
+
+            public string BookCode { get; set; } = string.Empty;
+            public string Title { get; set; } = string.Empty;
+            public string? Author { get; set; }
+            public string? Publisher { get; set; }
+            public string? Isbn { get; set; }
+            public string CategoryCode { get; set; } = string.Empty;
+            public decimal Price { get; set; }
+            public bool Active { get; set; }
+
+            public string LocationCode { get; set; } = string.Empty;
+            public int Qty { get; set; }
+            public int Reorder { get; set; }
+            public bool InventoryActive { get; set; }
+        }
+
+        public sealed class BookCatalogImportResultDto
+        {
+            public bool Ok { get; set; }
+            public int FileRowCount { get; set; }
+            public int CatalogUpsertCount { get; set; }
+            public int InventoryUpsertCount { get; set; }
+            public List<string> Errors { get; set; } = new();
+        }
     }
 }

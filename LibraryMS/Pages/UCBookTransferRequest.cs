@@ -16,6 +16,8 @@ namespace LibraryMS.Win.Pages
         private readonly BookTransferService _svc;
         private readonly LocationLookupService _locs;
 
+        private readonly Label lblTitle = new();
+
         private readonly TextBox txtToLoc = new();
         private readonly Label lblToLocDesc = new() { AutoSize = true };
 
@@ -33,6 +35,16 @@ namespace LibraryMS.Win.Pages
 
         private readonly BindingList<TransferLineDto> _lines = new();
 
+        // responsive layout fields
+        private readonly GroupBox gbMain = new();
+        private readonly TableLayoutPanel tlpRoot = new();
+        private readonly TableLayoutPanel tlpHeader = new();
+        private readonly TableLayoutPanel tlpBody = new();
+
+        private readonly GroupBox grpLines = new();
+        private readonly GroupBox grpForm = new();
+        private readonly TableLayoutPanel tblForm = new();
+
         public UCBookTransferRequest(BookTransferService svc, LocationLookupService locs)
         {
             InitializeComponent();
@@ -40,9 +52,12 @@ namespace LibraryMS.Win.Pages
             _locs = locs ?? throw new ArgumentNullException(nameof(locs));
 
             Dock = DockStyle.Fill;
+
             BuildUi();
             WireEvents();
+            ApplyResponsiveLayout();
 
+            Resize += (_, __) => ApplyResponsiveLayout();
             Load += async (_, __) => await OnRefreshAsync();
         }
 
@@ -51,7 +66,6 @@ namespace LibraryMS.Win.Pages
 
         public async Task OnRefreshAsync()
         {
-            
             if (AppSession.Current == null)
             {
                 MessageBox.Show("Session missing. Please login again.");
@@ -67,23 +81,45 @@ namespace LibraryMS.Win.Pages
             numQty.Maximum = 100000;
             txtRemark.Clear();
 
+            RefreshHeaderText();
+
             await Task.CompletedTask;
         }
 
         public void OnEdit() { }
 
-        // SAVE = submit transfer
         public async Task OnSaveAsync()
         {
-            if (AppSession.Current == null) { MessageBox.Show("Session missing."); return; }
-            if (string.IsNullOrWhiteSpace(FromLoc)) { MessageBox.Show("From Location missing in session."); return; }
-            if (string.IsNullOrWhiteSpace(txtToLoc.Text)) { MessageBox.Show("Select To Location (F2)."); return; }
+            if (AppSession.Current == null)
+            {
+                MessageBox.Show("Session missing.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(FromLoc))
+            {
+                MessageBox.Show("From Location missing in session.");
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtToLoc.Text))
+            {
+                MessageBox.Show("Select To Location (F2).");
+                return;
+            }
+
             if (txtToLoc.Text.Trim().Equals(FromLoc, StringComparison.OrdinalIgnoreCase))
             {
                 MessageBox.Show("To Location cannot be same as From Location.");
                 return;
             }
-            if (_lines.Count == 0) { MessageBox.Show("Add at least 1 book line."); return; }
+
+            if (_lines.Count == 0)
+            {
+                MessageBox.Show("Add at least 1 book line.");
+                return;
+            }
+
             foreach (var line in _lines)
             {
                 var available = await _svc.GetAvailableQtyAsync(FromLoc!, line.BookCode);
@@ -97,6 +133,7 @@ namespace LibraryMS.Win.Pages
                     return;
                 }
             }
+
             var dto = new TransferCreateDto(
                 FromLoc: FromLoc!,
                 ToLoc: txtToLoc.Text.Trim(),
@@ -108,8 +145,11 @@ namespace LibraryMS.Win.Pages
             try
             {
                 var docNo = await _svc.CreateAsync(dto);
-                MessageBox.Show($"Transfer request submitted.\nDocNo: {docNo}", "Success",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(
+                    $"Transfer request submitted.\nDocNo: {docNo}",
+                    "Success",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
 
                 await OnRefreshAsync();
             }
@@ -119,7 +159,6 @@ namespace LibraryMS.Win.Pages
             }
         }
 
-        // PROCESS = remove selected line (optional)
         public Task OnProcessAsync()
         {
             RemoveSelectedLine();
@@ -143,6 +182,7 @@ namespace LibraryMS.Win.Pages
 
                 txtToLoc.Text = pick.Code;
                 lblToLocDesc.Text = pick.Name;
+                await Task.CompletedTask;
             };
 
             txtBookCode.KeyDown += async (_, e) =>
@@ -167,6 +207,7 @@ namespace LibraryMS.Win.Pages
                 numQty.Maximum = Math.Max(1, available);
                 numQty.Value = available > 0 ? 1 : numQty.Minimum;
             };
+
             dgvLines.KeyDown += (_, e) =>
             {
                 if (e.KeyCode == Keys.Delete)
@@ -234,25 +275,60 @@ namespace LibraryMS.Win.Pages
             numQty.Maximum = 100000;
             txtBookCode.Focus();
         }
+
         private void RemoveSelectedLine()
         {
-            if (dgvLines.CurrentRow?.DataBoundItem is not TransferLineDto line) return;
+            if (dgvLines.CurrentRow?.DataBoundItem is not TransferLineDto line)
+                return;
+
             _lines.Remove(line);
         }
 
         private void BuildUi()
         {
+            SuspendLayout();
+
             BackColor = Color.PapayaWhip;
+            Controls.Clear();
 
-            var gb = new GroupBox { Dock = DockStyle.Fill, Padding = new Padding(10), Text = "Location Transfer Request" };
-            Controls.Add(gb);
+            txtRemark.Multiline = true;
+            txtRemark.Height = 72;
+            txtRemark.ScrollBars = ScrollBars.Vertical;
 
-            var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2 };
-            root.ColumnStyles.Clear();
-            root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            root.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 390F));
-            gb.Controls.Add(root);
-            // Left: Lines grid
+            lblTitle.Dock = DockStyle.Fill;
+            lblTitle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.Teal;
+            lblTitle.TextAlign = ContentAlignment.MiddleLeft;
+
+            gbMain.Dock = DockStyle.Fill;
+            gbMain.Padding = new Padding(10);
+            gbMain.Text = "Location Transfer Request";
+            Controls.Add(gbMain);
+
+            tlpRoot.Dock = DockStyle.Fill;
+            tlpRoot.ColumnCount = 1;
+            tlpRoot.RowCount = 2;
+            tlpRoot.Margin = new Padding(0);
+            tlpRoot.Padding = new Padding(0);
+            tlpRoot.ColumnStyles.Clear();
+            tlpRoot.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpRoot.RowStyles.Clear();
+            tlpRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            tlpRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            gbMain.Controls.Add(tlpRoot);
+
+            tlpHeader.Dock = DockStyle.Top;
+            tlpHeader.AutoSize = true;
+            tlpHeader.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            tlpHeader.Margin = new Padding(0);
+            tlpHeader.Padding = new Padding(8, 10, 8, 6);
+            tlpRoot.Controls.Add(tlpHeader, 0, 0);
+
+            tlpBody.Dock = DockStyle.Fill;
+            tlpBody.Margin = new Padding(0);
+            tlpBody.Padding = new Padding(0);
+            tlpRoot.Controls.Add(tlpBody, 0, 1);
+
             dgvLines.Dock = DockStyle.Fill;
             dgvLines.ReadOnly = true;
             dgvLines.AllowUserToAddRows = false;
@@ -263,66 +339,185 @@ namespace LibraryMS.Win.Pages
             dgvLines.BackgroundColor = Color.White;
             dgvLines.RowHeadersVisible = false;
             dgvLines.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvLines.BorderStyle = BorderStyle.FixedSingle;
             dgvLines.DataSource = _lines;
 
-            root.Controls.Add(dgvLines, 0, 0);
+            grpLines.Dock = DockStyle.Fill;
+            grpLines.Text = "Transfer Lines";
+            grpLines.Padding = new Padding(6);
+            grpLines.Margin = new Padding(3);
+            grpLines.Controls.Add(dgvLines);
 
-            // Right: Form
-            var form = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, Padding = new Padding(10) };
-            form.ColumnStyles.Clear();
-            form.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
-            form.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            for (int i = 0; i < 10; i++) form.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-            form.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            grpForm.Dock = DockStyle.Fill;
+            grpForm.Text = "Transfer Details";
+            grpForm.Padding = new Padding(6);
+            grpForm.Margin = new Padding(3);
 
-            AddRow(form, 0, "From", new Label { Text = FromLocDesc ?? "", AutoSize = true, Padding = new Padding(0, 6, 0, 0) });
-            AddRow(form, 1, "To (F2)", txtToLoc);
-            AddRow(form, 2, "To Desc", lblToLocDesc);
-            AddRow(form, 3, "Book (F2)", txtBookCode);
-            AddRow(form, 4, "Title", txtBookTitle);
-            AddRow(form, 5, "Qty", numQty);
+            tblForm.Dock = DockStyle.Fill;
+            tblForm.ColumnCount = 2;
+            tblForm.Padding = new Padding(10);
+            tblForm.Margin = new Padding(0);
+            tblForm.AutoScroll = true;
+            tblForm.ColumnStyles.Clear();
+            tblForm.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
+            tblForm.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+
+            tblForm.RowStyles.Clear();
+            for (int i = 0; i < 6; i++)
+                tblForm.RowStyles.Add(new RowStyle(SizeType.Absolute, 34F));
+
+            tblForm.RowStyles.Add(new RowStyle(SizeType.AutoSize));      // actions
+            tblForm.RowStyles.Add(new RowStyle(SizeType.Absolute, 84F)); // remark
+            tblForm.RowStyles.Add(new RowStyle(SizeType.Percent, 100F)); // filler
+
+            AddRow(tblForm, 0, "From", new Label
+            {
+                Text = FromLocDesc ?? "",
+                AutoSize = true,
+                Padding = new Padding(0, 6, 0, 0)
+            });
+
+            AddRow(tblForm, 1, "To (F2)", txtToLoc);
+            AddRow(tblForm, 2, "To Desc", lblToLocDesc);
+            AddRow(tblForm, 3, "Book (F2)", txtBookCode);
+            AddRow(tblForm, 4, "Title", txtBookTitle);
+            AddRow(tblForm, 5, "Qty", numQty);
 
             SetupBtn(btnAdd, "Add Line", Color.SeaGreen);
             SetupBtn(btnRemove, "Remove", Color.IndianRed);
             SetupBtn(btnClear, "Clear", Color.DimGray);
 
-            btnAdd.Dock = DockStyle.Fill;
-            btnRemove.Dock = DockStyle.Fill;
-            btnClear.Dock = DockStyle.Fill;
+            btnAdd.AutoSize = true;
+            btnAdd.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnAdd.Margin = new Padding(0, 0, 8, 8);
 
-            btnAdd.Margin = new Padding(0, 0, 6, 0);
-            btnRemove.Margin = new Padding(0, 0, 6, 0);
-            btnClear.Margin = new Padding(0);
+            btnRemove.AutoSize = true;
+            btnRemove.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnRemove.Margin = new Padding(0, 0, 8, 8);
 
-            var actions = new TableLayoutPanel
+            btnClear.AutoSize = true;
+            btnClear.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnClear.Margin = new Padding(0, 0, 0, 8);
+
+            var flpActions = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
-                ColumnCount = 3,
-                RowCount = 1,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true,
+                AutoSize = true,
+                AutoSizeMode = AutoSizeMode.GrowAndShrink,
                 Margin = new Padding(0),
                 Padding = new Padding(0)
             };
 
-            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 34F));
-            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
-            actions.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33F));
+            flpActions.Controls.Add(btnAdd);
+            flpActions.Controls.Add(btnRemove);
+            flpActions.Controls.Add(btnClear);
 
-            actions.Controls.Add(btnAdd, 0, 0);
-            actions.Controls.Add(btnRemove, 1, 0);
-            actions.Controls.Add(btnClear, 2, 0);
+            tblForm.Controls.Add(new Label
+            {
+                Text = "Actions",
+                AutoSize = true,
+                Padding = new Padding(0, 6, 0, 0),
+                Dock = DockStyle.Fill
+            }, 0, 6);
 
-            form.Controls.Add(new Label { Text = "Actions", AutoSize = true, Padding = new Padding(0, 6, 0, 0) }, 0, 6);
-            form.Controls.Add(actions, 1, 6);
+            tblForm.Controls.Add(flpActions, 1, 6);
 
-            AddRow(form, 7, "Remark", txtRemark);
+            AddRow(tblForm, 7, "Remark", txtRemark);
 
-            root.Controls.Add(form, 1, 0);
+            grpForm.Controls.Add(tblForm);
+
+            RefreshHeaderText();
+            ApplyResponsiveLayout();
+
+            ResumeLayout(true);
+        }
+
+        private void RefreshHeaderText()
+        {
+            var fromText = string.IsNullOrWhiteSpace(FromLocDesc)
+                ? "Location Transfer Request"
+                : $"Location Transfer Request - From: {FromLocDesc}";
+
+            lblTitle.Text = fromText;
+
+            if (tblForm.GetControlFromPosition(1, 0) is Label fromLabel)
+                fromLabel.Text = FromLocDesc ?? "";
+        }
+
+        private void ApplyResponsiveLayout()
+        {
+            if (IsDisposed)
+                return;
+
+            bool narrow = Width < 1050;
+
+            SuspendLayout();
+            tlpHeader.SuspendLayout();
+            tlpBody.SuspendLayout();
+
+            tlpHeader.Controls.Clear();
+            tlpHeader.ColumnStyles.Clear();
+            tlpHeader.RowStyles.Clear();
+
+            tlpHeader.ColumnCount = 1;
+            tlpHeader.RowCount = 1;
+            tlpHeader.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpHeader.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+            tlpHeader.Controls.Add(lblTitle, 0, 0);
+
+            tlpBody.Controls.Clear();
+            tlpBody.ColumnStyles.Clear();
+            tlpBody.RowStyles.Clear();
+
+            if (narrow)
+            {
+                tlpBody.ColumnCount = 1;
+                tlpBody.RowCount = 2;
+
+                tlpBody.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 58F));
+                tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 42F));
+
+                grpForm.MinimumSize = Size.Empty;
+
+                tlpBody.Controls.Add(grpLines, 0, 0);
+                tlpBody.Controls.Add(grpForm, 0, 1);
+            }
+            else
+            {
+                tlpBody.ColumnCount = 2;
+                tlpBody.RowCount = 1;
+
+                tlpBody.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+                tlpBody.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 400F));
+                tlpBody.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+
+                grpForm.MinimumSize = new Size(360, 0);
+
+                tlpBody.Controls.Add(grpLines, 0, 0);
+                tlpBody.Controls.Add(grpForm, 1, 0);
+            }
+
+            tlpBody.ResumeLayout(true);
+            tlpHeader.ResumeLayout(true);
+            ResumeLayout(true);
         }
 
         private static void AddRow(TableLayoutPanel t, int row, string label, Control input)
         {
-            var lbl = new Label { Text = label, AutoSize = true, Padding = new Padding(0, 6, 0, 0), Dock = DockStyle.Fill };
+            var lbl = new Label
+            {
+                Text = label,
+                AutoSize = true,
+                Padding = new Padding(0, 6, 0, 0),
+                Dock = DockStyle.Fill
+            };
+
             input.Dock = DockStyle.Fill;
+            input.Margin = new Padding(3);
+
             t.Controls.Add(lbl, 0, row);
             t.Controls.Add(input, 1, row);
         }
@@ -330,13 +525,16 @@ namespace LibraryMS.Win.Pages
         private static void SetupBtn(Button b, string text, Color back)
         {
             b.Text = text;
-            b.Height = 30;
+            b.Height = 36;
+            b.MinimumSize = new Size(95, 36);
+            b.Padding = new Padding(12, 0, 12, 0);
             b.BackColor = back;
             b.ForeColor = Color.White;
             b.FlatStyle = FlatStyle.Flat;
             b.FlatAppearance.BorderSize = 0;
             b.Margin = new Padding(0);
             b.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            b.TextAlign = ContentAlignment.MiddleCenter;
             b.UseVisualStyleBackColor = false;
         }
     }
