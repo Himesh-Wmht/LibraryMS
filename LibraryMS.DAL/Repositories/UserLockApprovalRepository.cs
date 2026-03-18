@@ -19,11 +19,11 @@ namespace LibraryMS.DAL.Repositories
             var ulId = "UL" + DateTime.Now.ToString("yyyyMMddHHmmssfff");
 
             const string sql = @"
-IF NOT EXISTS (SELECT 1 FROM dbo.T_TBLUSERLOCKAPPROVAL WHERE UL_USERCODE=@U AND UL_STATUS='P')
-BEGIN
-  INSERT INTO dbo.T_TBLUSERLOCKAPPROVAL (UL_ID, UL_USERCODE, UL_DATE, UL_STATUS, M_DATE)
-  VALUES (@I, @U, SYSDATETIME(), 'P', SYSDATETIME());
-END;";
+                                IF NOT EXISTS (SELECT 1 FROM dbo.T_TBLUSERLOCKAPPROVAL WHERE UL_USERCODE=@U AND UL_STATUS='P')
+                                BEGIN
+                                  INSERT INTO dbo.T_TBLUSERLOCKAPPROVAL (UL_ID, UL_USERCODE, UL_DATE, UL_STATUS, M_DATE)
+                                  VALUES (@I, @U, SYSDATETIME(), 'P', SYSDATETIME());
+                                END;";
 
             await using var con = _db.CreateConnection();
             await using var cmd = new SqlCommand(sql, con);
@@ -39,10 +39,10 @@ END;";
         public async Task<List<UserLockRowDto>> GetPendingAsync()
         {
             const string sql = @"
-SELECT UL_ID, UL_USERCODE, UL_DATE, UL_STATUS
-FROM dbo.T_TBLUSERLOCKAPPROVAL
-WHERE UL_STATUS='P'
-ORDER BY UL_DATE DESC;";
+                                SELECT UL_ID, UL_USERCODE, UL_DATE, UL_STATUS
+                                FROM dbo.T_TBLUSERLOCKAPPROVAL
+                                WHERE UL_STATUS='P'
+                                ORDER BY UL_DATE DESC;";
 
             var list = new List<UserLockRowDto>();
             await using var con = _db.CreateConnection();
@@ -66,36 +66,36 @@ ORDER BY UL_DATE DESC;";
         public async Task UnlockAsync(string ulId, string adminUserCode)
         {
             const string sql = @"
-BEGIN TRAN;
+                                BEGIN TRAN;
 
-DECLARE @U varchar(20);
+                                DECLARE @U varchar(20);
 
-SELECT @U = UL_USERCODE
-FROM dbo.T_TBLUSERLOCKAPPROVAL
-WHERE UL_ID=@I AND UL_STATUS='P';
+                                SELECT @U = UL_USERCODE
+                                FROM dbo.T_TBLUSERLOCKAPPROVAL
+                                WHERE UL_ID=@I AND UL_STATUS='P';
 
-IF @U IS NULL
-BEGIN
-  ROLLBACK;
-  RAISERROR('Unlock failed: request not pending.', 16, 1);
-  RETURN;
-END
+                                IF @U IS NULL
+                                BEGIN
+                                  ROLLBACK;
+                                  RAISERROR('Unlock failed: request not pending.', 16, 1);
+                                  RETURN;
+                                END
 
-UPDATE dbo.M_TBLUSERS
-SET U_FAIL_COUNT=0,
-    U_LOCKED=0,
-    U_LOCKED_AT=NULL,
-    M_DATE=SYSDATETIME()
-WHERE U_CODE=@U;
+                                UPDATE dbo.M_TBLUSERS
+                                SET U_FAIL_COUNT=0,
+                                    U_LOCKED=0,
+                                    U_LOCKED_AT=NULL,
+                                    M_DATE=SYSDATETIME()
+                                WHERE U_CODE=@U;
 
-UPDATE dbo.T_TBLUSERLOCKAPPROVAL
-SET UL_STATUS='U',
-    UL_BY=@B,
-    UL_BY_DATE=SYSDATETIME(),
-    M_DATE=SYSDATETIME()
-WHERE UL_ID=@I AND UL_STATUS='P';
+                                UPDATE dbo.T_TBLUSERLOCKAPPROVAL
+                                SET UL_STATUS='U',
+                                    UL_BY=@B,
+                                    UL_BY_DATE=SYSDATETIME(),
+                                    M_DATE=SYSDATETIME()
+                                WHERE UL_ID=@I AND UL_STATUS='P';
 
-COMMIT;";
+                                COMMIT;";
 
             await using var con = _db.CreateConnection();
             await using var cmd = new SqlCommand(sql, con);

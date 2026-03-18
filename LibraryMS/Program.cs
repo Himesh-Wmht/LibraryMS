@@ -26,7 +26,7 @@ namespace LibraryMS
 
                 if (result != DialogResult.Retry)
                     break; // normal close -> exit app (or change behavior if you want)
-                // Retry means logout -> loop again to show login
+                
             }
         }
     }
