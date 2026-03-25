@@ -379,7 +379,41 @@ namespace LibraryMS.DAL.Repositories
             await con.OpenAsync();
             return await cmd.ExecuteNonQueryAsync();
         }
+        public async Task<ResPendingRowDto?> GetByIdAsync(int resId)
+        {
+            const string sql = @"
+                            SELECT r.BR_ID, r.BR_USERCODE, ISNULL(u.U_NAME,''), r.BR_BOOKCODE, b.B_TITLE,
+                                   r.BR_LOCCODE, r.BR_QTY, r.BR_HOLD_DAYS, r.BR_REQ_DATE, r.BR_STATUS
+                            FROM dbo.T_TBLBOOKRESERVATIONS r
+                            JOIN dbo.M_TBLBOOKS b ON b.B_CODE = r.BR_BOOKCODE
+                            LEFT JOIN dbo.M_TBLUSERS u ON u.U_CODE = r.BR_USERCODE
+                            WHERE r.BR_ID = @I;";
 
+            await using var con = _db.CreateConnection();
+            await using var cmd = new SqlCommand(sql, con);
+            cmd.Parameters.Add("@I", SqlDbType.Int).Value = resId;
+
+            await con.OpenAsync();
+            await using var r = await cmd.ExecuteReaderAsync();
+
+            if (await r.ReadAsync())
+            {
+                return new ResPendingRowDto(
+                    ResId: r.GetInt32(0),
+                    UserCode: r.GetString(1),
+                    UserName: r.GetString(2),
+                    BookCode: r.GetString(3),
+                    Title: r.GetString(4),
+                    LocCode: r.GetString(5),
+                    Qty: r.GetInt32(6),
+                    HoldDays: r.GetInt32(7),
+                    ReqDate: r.GetDateTime(8),
+                    Status: r.GetString(9)
+                );
+            }
+
+            return null;
+        }
         private static string? NullIfEmpty(string? s) => string.IsNullOrWhiteSpace(s) ? null : s.Trim();
     }
 }

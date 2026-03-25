@@ -633,6 +633,38 @@ BookReturnService bookReturnService, FineCollectionService fineCollectionService
                 ShowPage(new UCSubscriptionRenewalApprovals(_subscriptionRenewalService));
                 return;
             }
+            if (menu.Code == "M00047")
+            {
+                ShowPage(new UCReportGrid(
+                    "Book Borrow History",
+                    (from, to, top) => _reportService.GetBookBorrowHistoryAsync(AppSession.Current!.LocationCode, from, to),
+                    useDates: true,
+                    useTop: false
+                ));
+                return;
+            }
+
+            if (menu.Code == "M00048")
+            {
+                ShowPage(new UCReportGrid(
+                    "Book Return History",
+                    (from, to, top) => _reportService.GetBookReturnHistoryAsync(AppSession.Current!.LocationCode, from, to),
+                    useDates: true,
+                    useTop: false
+                ));
+                return;
+            }
+
+            if (menu.Code == "M00049")
+            {
+                ShowPage(new UCReportGrid(
+                    "User Details Report",
+                    (from, to, top) => _reportService.GetUserDetailsAsync(),
+                    useDates: false,
+                    useTop: false
+                ));
+                return;
+            }
         }
 
 

@@ -50,5 +50,23 @@ namespace LibraryMS.BLL.Services
                 "dbo.sp_RptBookAvailability",
                 new SqlParameter("@LocCode", locCode)
             );
+        public Task<DataTable> GetBookBorrowHistoryAsync(string locCode, DateTime? from, DateTime? to) =>
+    _repo.ExecuteReportAsync(
+        "dbo.sp_RptBookBorrowHistory",
+        new SqlParameter("@LocCode", locCode),
+        new SqlParameter("@DateFrom", (object?)from?.Date ?? DBNull.Value),
+        new SqlParameter("@DateTo", (object?)to?.Date ?? DBNull.Value)
+    );
+
+        public Task<DataTable> GetBookReturnHistoryAsync(string locCode, DateTime? from, DateTime? to) =>
+            _repo.ExecuteReportAsync(
+                "dbo.sp_RptBookReturnHistory",
+                new SqlParameter("@LocCode", locCode),
+                new SqlParameter("@DateFrom", (object?)from?.Date ?? DBNull.Value),
+                new SqlParameter("@DateTo", (object?)to?.Date ?? DBNull.Value)
+            );
+
+        public Task<DataTable> GetUserDetailsAsync() =>
+            _repo.ExecuteReportAsync("dbo.sp_RptUserDetails");
     }
 }

@@ -234,7 +234,7 @@ namespace LibraryMS.DAL.Repositories
         public const string Pending = "P";
         public const string Lost = "L";
     }
-    // Add the following class to define the missing 'ReturnConditions' constants.
+    
     public static class ReturnConditions
     {
         public const string Lost = "L";

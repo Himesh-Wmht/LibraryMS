@@ -34,7 +34,32 @@ namespace LibraryMS.DAL.Repositories
             await con.OpenAsync();
             await cmd.ExecuteNonQueryAsync();
         }
+        public async Task<UserLockRowDto?> GetByIdAsync(string ulId)
+        {
+            const string sql = @"
+                    SELECT UL_ID, UL_USERCODE, UL_DATE, UL_STATUS
+                    FROM dbo.T_TBLUSERLOCKAPPROVAL
+                    WHERE UL_ID = @I;";
 
+            await using var con = _db.CreateConnection();
+            await using var cmd = new SqlCommand(sql, con);
+            cmd.Parameters.Add("@I", SqlDbType.VarChar, 30).Value = ulId;
+
+            await con.OpenAsync();
+            await using var r = await cmd.ExecuteReaderAsync();
+
+            if (await r.ReadAsync())
+            {
+                return new UserLockRowDto(
+                    UlId: r.GetString(0),
+                    UserCode: r.GetString(1),
+                    LockedAt: r.GetDateTime(2),
+                    Status: r.GetString(3)
+                );
+            }
+
+            return null;
+        }
         // ✅ Admin page: list pending unlock requests
         public async Task<List<UserLockRowDto>> GetPendingAsync()
         {

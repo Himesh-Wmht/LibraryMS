@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading.Tasks;
 using LibraryMS.BLL.Models;
 using LibraryMS.DAL.Repositories;
@@ -11,11 +12,15 @@ namespace LibraryMS.BLL.Services
     {
         private readonly BookReturnRepository _repo;
         private readonly FineCalculatorService _fineCalculator;
+        private readonly NotificationService _notifications;
+        private readonly UserContactService _userContacts;
 
-        public BookReturnService(BookReturnRepository repo, FineCalculatorService fineCalculator)
+        public BookReturnService(BookReturnRepository repo, FineCalculatorService fineCalculator, NotificationService notifications, UserContactService userContacts)
         {
             _repo = repo;
             _fineCalculator = fineCalculator;
+            _notifications = notifications;
+            _userContacts = userContacts;
         }
 
         public async Task<ReturnProcessResultDto> CreateAsync(ReturnCreateDto dto)
@@ -73,7 +78,87 @@ namespace LibraryMS.BLL.Services
                 }
             }
 
-            return await _repo.CreateAsync(dto, fineLines);
+            var result = await _repo.CreateAsync(dto, fineLines);
+
+            // ✅ SEND EMAIL ONLY IF FINE EXISTS
+            if (!string.IsNullOrWhiteSpace(result.FineDocNo) && result.FineTotal > 0)
+            {
+                var contact = await _userContacts.GetByUserCodeAsync(dto.MemberCode);
+
+                if (contact != null && !string.IsNullOrWhiteSpace(contact.Email))
+                {
+                    var body = BuildFineEmailBody(
+                        memberName: contact.UserName,
+                        borrowDocNo: dto.BorrowDocNo,
+                        returnDocNo: result.ReturnDocNo,
+                        fineDocNo: result.FineDocNo!,
+                        fineTotal: result.FineTotal,
+                        fineLines: fineLines
+                    );
+
+                    await _notifications.QueueBothAsync(
+                        eventType: "FINE_CREATED",
+                        refDocNo: result.FineDocNo,
+                        userCode: dto.MemberCode,
+                        emailTo: contact.Email,
+                        subject: $"Library Fine Generated - {result.FineDocNo}",
+                        body: body
+                    );
+
+                    await _notifications.ProcessPendingAsync();
+                }
+            }
+
+            return result;
+        }
+
+        private static string BuildFineEmailBody(
+            string memberName,
+            string borrowDocNo,
+            string returnDocNo,
+            string fineDocNo,
+            decimal fineTotal,
+            List<FineLineDto> fineLines)
+        {
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"Dear {memberName},");
+            sb.AppendLine();
+            sb.AppendLine("A fine has been generated for your returned library books.");
+            sb.AppendLine();
+            sb.AppendLine($"Borrow Document : {borrowDocNo}");
+            sb.AppendLine($"Return Document : {returnDocNo}");
+            sb.AppendLine($"Fine Document   : {fineDocNo}");
+            sb.AppendLine($"Fine Total      : {fineTotal:N2}");
+            sb.AppendLine();
+            sb.AppendLine("Fine Details:");
+            sb.AppendLine("--------------------------------------------------");
+
+            foreach (var line in fineLines)
+            {
+                var fineTypeText = line.FineType switch
+                {
+                    "O" => "Overdue",
+                    "D" => "Damaged",
+                    "L" => "Lost",
+                    _ => line.FineType
+                };
+
+                sb.AppendLine($"Type     : {fineTypeText}");
+                sb.AppendLine($"Book Code: {line.BookCode}");
+                sb.AppendLine($"Qty      : {line.Qty}");
+                sb.AppendLine($"Rate     : {line.Rate:N2}");
+                sb.AppendLine($"Amount   : {line.Amount:N2}");
+                sb.AppendLine($"Remarks  : {line.Remark}");
+                sb.AppendLine("--------------------------------------------------");
+            }
+
+            sb.AppendLine();
+            sb.AppendLine("Please contact the library/admin for payment details.");
+            sb.AppendLine();
+            sb.AppendLine("Library Management System");
+
+            return sb.ToString();
         }
 
         private static string Normalize(string? value)

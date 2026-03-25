@@ -59,7 +59,38 @@ namespace LibraryMS.DAL.Repositories
             }
             return list;
         }
+        public async Task<MemberFineRowDto?> GetByDocNoAsync(string fineDocNo)
+        {
+            const string sql = @"
+SELECT FH_DOCNO, FH_MEMBERCODE, FH_REF_TYPE, FH_REF_DOCNO, FH_FINE_DATE, FH_TOTAL, FH_PAID, FH_BALANCE, FH_STATUS, FH_REMARK
+FROM dbo.T_TBLMEMBERFINE_H
+WHERE FH_DOCNO = @D;";
 
+            await using var con = _db.CreateConnection();
+            await using var cmd = new SqlCommand(sql, con);
+            cmd.Parameters.Add("@D", SqlDbType.VarChar, 30).Value = fineDocNo;
+
+            await con.OpenAsync();
+            await using var r = await cmd.ExecuteReaderAsync();
+
+            if (await r.ReadAsync())
+            {
+                return new MemberFineRowDto(
+                    FineDocNo: r.GetString(0),
+                    MemberCode: r.GetString(1),
+                    RefType: r.GetString(2),
+                    RefDocNo: r.GetString(3),
+                    FineDate: r.GetDateTime(4),
+                    Total: r.GetDecimal(5),
+                    Paid: r.GetDecimal(6),
+                    Balance: r.GetDecimal(7),
+                    Status: r.GetString(8),
+                    Remark: r.IsDBNull(9) ? null : r.GetString(9)
+                );
+            }
+
+            return null;
+        }
         public async Task PayAsync(FinePaymentDto dto)
         {
             await using var con = _db.CreateConnection();

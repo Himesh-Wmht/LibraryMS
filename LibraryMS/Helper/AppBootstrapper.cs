@@ -6,6 +6,7 @@ using LibraryMS.DAL.Core;
 using LibraryMS.DAL.Repositories;
 using Microsoft.Extensions.Configuration;
 using static LibraryMS.BLL.Models.Transaction;
+using LibraryMS.BLL.Models;
 
 namespace LibraryMS.Win.Helper
 {
@@ -25,11 +26,14 @@ namespace LibraryMS.Win.Helper
 
             var cs = config.GetConnectionString("DefaultConnection")
                      ?? throw new Exception("Missing DefaultConnection in appsettings.json");
+            var emailSettings = new EmailSettings();
+            config.GetSection("EmailSettings").Bind(emailSettings);
 
             // DAL core
             var db = new SqlDb(new DbConfig(cs));
 
             // Repositories
+            var notificationRepo = new NotificationRepository(db);
             var userRepo = new UserRepository(db);
             var groupRepo = new UserGroupRepository(db);
             var subRepo = new SubscriptionRepository(db);
@@ -53,8 +57,12 @@ namespace LibraryMS.Win.Helper
             var fineRepo = new FineCollectionRepository(db);
             var reportRepo = new ReportRepository(db);
             var subRenewalRepo = new SubscriptionRenewalApprovalRepository(db);
+            var userContactRepo = new UserContactRepository(db);
 
             // Services (BLL)
+            var emailSenderService = new EmailSenderService(emailSettings);
+            var userContactService = new UserContactService(userContactRepo);
+            var notificationService = new NotificationService(notificationRepo, emailSenderService);
             var auth = new AuthService(userRepo, lockRepo);
             var menuService = new MenuService(menuRepo);
             var approvalService = new ApprovalService(approvalRepo);
@@ -63,20 +71,21 @@ namespace LibraryMS.Win.Helper
             var bookCatalogService = new BookCatalogService(bookRepo, catRepo);
             var bookInventoryService = new BookInventoryService(invRepo);
             var passwordResetService = new PasswordResetService(pwdReqRepo);
-            var userLockService = new UserLockService(lockRepo);
-            var resService = new BookReservationService(resRepo);
+            var userLockService = new UserLockService(lockRepo, notificationService, userContactService);
+            //var resService = new BookReservationService(resRepo, notificationService, userContactService);
             var regService = new RegistrationService(db, groupRepo, subRepo, locRepo, regRepo, approvalRepo, userLookupRepo);
             var userLookupService = new UserLookupService(userLookupRepo);
             var loc = new LocationService(locRepo);
-            var reservationsService = new BookReservationService(resRepo);
+            var reservationsService = new BookReservationService(resRepo, notificationService, userContactService);
             var transferService = new BookTransferService(transferRepo);
             var locLookupService = new LocationLookupService(locLookupRepo);
             var fineCalculator = new FineCalculatorService(rules);
             var borrowService = new BookBorrowService(borrowRepo);
-            var returnService = new BookReturnService(returnRepo, fineCalculator);
-            var fineService = new FineCollectionService(fineRepo);
+            var returnService = new BookReturnService(returnRepo, fineCalculator, notificationService, userContactService);
+            var fineService = new FineCollectionService(fineRepo, notificationService, userContactService);
             var reportService = new ReportService(reportRepo);
             var subRenewalService = new SubscriptionRenewalApprovalService(subRenewalRepo);
+            
 
             groupMenuService.EnsureAsync().GetAwaiter().GetResult();
             return new ServiceContainer(
@@ -100,7 +109,10 @@ namespace LibraryMS.Win.Helper
                 Returns: returnService,
                 Fines: fineService,
                 Reports: reportService,
-                SubscriptionRenewals: subRenewalService
+                SubscriptionRenewals: subRenewalService,
+                EmailSender: emailSenderService,
+                Notifications: notificationService,
+                UserContacts: userContactService
             );
         }
     }
@@ -126,6 +138,9 @@ namespace LibraryMS.Win.Helper
         BookReturnService Returns,
         FineCollectionService Fines,
         ReportService Reports,
-        SubscriptionRenewalApprovalService SubscriptionRenewals
+        SubscriptionRenewalApprovalService SubscriptionRenewals,
+        EmailSenderService EmailSender,
+        NotificationService Notifications,
+        UserContactService UserContacts
     );
 }
