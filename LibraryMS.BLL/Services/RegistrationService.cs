@@ -194,6 +194,8 @@ namespace LibraryMS.BLL.Services
                 Nic: u.Nic,
                 Address: u.Address,
                 Dob: u.Dob,
+                RegisteredDate: u.RegisteredDate,
+                ExpiredDate: u.ExpireDate,
                 Gender: u.Gender,
                 MaxBorrow: u.MaxBorrow,
                 AllLocations: all,

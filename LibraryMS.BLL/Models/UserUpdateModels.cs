@@ -28,6 +28,8 @@ namespace LibraryMS.BLL.Models
             string? Nic,
             string? Address,
             System.DateTime? Dob,
+            System.DateTime? RegisteredDate,
+            System.DateTime? ExpiredDate,
             string? Gender,
             int MaxBorrow,
             bool AllLocations,

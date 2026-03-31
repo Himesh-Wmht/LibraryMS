@@ -1,6 +1,7 @@
 ﻿using LibraryMS.BLL.Models;
 using LibraryMS.BLL.Services;
 using LibraryMS.Win.Interfaces;
+using Microsoft.VisualBasic.ApplicationServices;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -104,8 +105,7 @@ namespace LibraryMS
             {
                 ShowError("Select a Location.");
                 return;
-            }
-
+            }         
             btnLogin.Enabled = false;
 
             try
@@ -198,6 +198,16 @@ namespace LibraryMS
             }
 
             base.OnFormClosed(e);
+        }
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                Close();
+                return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
         }
     }
 }

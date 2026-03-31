@@ -12,7 +12,8 @@ namespace LibraryMS.BLL.Services
         InvalidId,
         InvalidPassword,
         InactiveUser,
-        AccountLocked
+        AccountLocked,
+        AccessDenied
     }
 
     public sealed class AuthService
@@ -59,6 +60,10 @@ namespace LibraryMS.BLL.Services
 
             if (login.Locked)
                 return (AuthResult.AccountLocked, null, "Account locked. Please contact Admin.");
+            // BLOCK USER GROUP
+            if (string.Equals(login.GroupCode?.Trim(), "USER", StringComparison.OrdinalIgnoreCase))
+                return (AuthResult.AccessDenied, null, "This user group is not allowed to log in.");
+
 
             // ✅ Verify password (hashed OR legacy plaintext)
             bool ok;

@@ -73,6 +73,8 @@ namespace LibraryMS.Win.Pages
             txtNic.Text = u.Nic ?? "";
             txtAddress.Text = u.Address ?? "";
             dtpDob.Value = u.Dob ?? DateTime.Now.Date;
+            dtpValidFrom.Text = (u.RegisteredDate ?? DateTime.Now.Date).ToString("yyyy-MM-dd");
+            dtpExpiresOn.Text = (u.ExpiredDate ?? DateTime.Now.Date).ToString("yyyy-MM-dd");
 
             cmbGroup.SelectedValue = u.GroupCode;
 
@@ -105,9 +107,9 @@ namespace LibraryMS.Win.Pages
                 SelectLocationCombo(u.LocationCode);
 
             UpdateAssignedLocationsList();
-            ApplyGroupRulesUi();
-            ApplySubscriptionUi();
-            UpdateExpireDate();
+            //ApplyGroupRulesUi();
+            //ApplySubscriptionUi();
+           // UpdateExpireDate();
 
             txtPassword.Clear();
             txtConfirmPassword.Clear();
@@ -529,7 +531,7 @@ namespace LibraryMS.Win.Pages
 
             rdoSubscribed.Checked = u.SubscriptionStatus;
             rdoNoSubscription.Checked = !u.SubscriptionStatus;
-
+           
             if (!string.IsNullOrWhiteSpace(u.SubscriptionId))
                 cmbSubscription.SelectedValue = u.SubscriptionId;
 

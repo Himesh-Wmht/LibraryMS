@@ -20,9 +20,9 @@ namespace LibraryMS.DAL.Repositories
         public async Task<LoginUserDb?> GetLoginUserAsync(string userCode)
         {
             const string sql = @"
-SELECT U_CODE, U_NAME, U_GROUP, ISNULL(U_ACTIVE,0), U_PASSWORD, ISNULL(U_FAIL_COUNT,0), ISNULL(U_LOCKED,0)
-FROM dbo.M_TBLUSERS
-WHERE U_CODE=@U;";
+                                SELECT U_CODE, U_NAME, U_GROUP, ISNULL(U_ACTIVE,0), U_PASSWORD, ISNULL(U_FAIL_COUNT,0), ISNULL(U_LOCKED,0)
+                                FROM dbo.M_TBLUSERS
+                                WHERE U_CODE=@U;";
 
             await using var con = _db.CreateConnection();
             await using var cmd = new SqlCommand(sql, con);
@@ -46,13 +46,13 @@ WHERE U_CODE=@U;";
         public async Task OnLoginSuccessAsync(string userCode, string? upgradedHash = null)
         {
             const string sql = @"
-UPDATE dbo.M_TBLUSERS
-SET U_FAIL_COUNT=0,
-    U_LOCKED=0,
-    U_LOCKED_AT=NULL,
-    U_PASSWORD=COALESCE(@H, U_PASSWORD),
-    M_DATE=SYSDATETIME()
-WHERE U_CODE=@U;";
+                                UPDATE dbo.M_TBLUSERS
+                                SET U_FAIL_COUNT=0,
+                                    U_LOCKED=0,
+                                    U_LOCKED_AT=NULL,
+                                    U_PASSWORD=COALESCE(@H, U_PASSWORD),
+                                    M_DATE=SYSDATETIME()
+                                WHERE U_CODE=@U;";
 
             await using var con = _db.CreateConnection();
             await using var cmd = new SqlCommand(sql, con);

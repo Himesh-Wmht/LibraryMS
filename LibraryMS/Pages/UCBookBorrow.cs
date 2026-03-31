@@ -29,7 +29,12 @@ namespace LibraryMS.Win.Pages
         private readonly TextBox txtBookCode = new() { ReadOnly = true };
         private readonly TextBox txtBookTitle = new() { ReadOnly = true };
         private readonly NumericUpDown numQty = new() { Minimum = 1, Maximum = 1000, Value = 1 };
-        private readonly DateTimePicker dtDueDate = new() { Format = DateTimePickerFormat.Short };
+        private readonly DateTimePicker dtDueDate = new()
+        {
+            Format = DateTimePickerFormat.Short,
+            MinDate = DateTime.Today
+        };
+        // private readonly DateTimePicker dtDueDate = new() { Format = DateTimePickerFormat.Short };
         private readonly TextBox txtReservationId = new() { ReadOnly = true };
         private readonly TextBox txtRemark = new();
 
@@ -90,6 +95,7 @@ namespace LibraryMS.Win.Pages
             lblLoc.Text = LocDesc ?? "";
             txtMemberCode.Text = AppSession.Current.UserCode;
             lblMemberName.Text = AppSession.Current.UserName ?? "";
+            dtDueDate.MinDate = DateTime.Today;
             dtDueDate.Value = DateTime.Today.AddDays(14);
 
             _lines.Clear();
@@ -229,7 +235,11 @@ namespace LibraryMS.Win.Pages
                 MessageBox.Show("Select Book.");
                 return;
             }
-
+            if (dtDueDate.Value.Date < DateTime.Today)
+            {
+                MessageBox.Show("Due date cannot be in the past.");
+                return;
+            }
             var code = txtBookCode.Text.Trim();
             var title = txtBookTitle.Text.Trim();
             var qty = (int)numQty.Value;
@@ -268,6 +278,7 @@ namespace LibraryMS.Win.Pages
             txtReservationId.Clear();
             txtRemark.Clear();
             numQty.Value = 1;
+            dtDueDate.MinDate = DateTime.Today;
             dtDueDate.Value = DateTime.Today.AddDays(14);
         }
 

@@ -28,6 +28,7 @@ namespace LibraryMS.DAL.Repositories
             bool SubscriptionStatus,
             string? SubscriptionType,
             DateTime? ExpireDate,
+            DateTime? RegisteredDate,
             int MaxBorrow
         );
 
@@ -77,14 +78,14 @@ ORDER BY U_NAME;";
         public async Task<UserDetailsRow?> GetUserDetailsAsync(string userCode)
         {
             const string sql = @"
-SELECT
-    U_CODE, U_NAME, ISNULL(U_ACTIVE,0), U_GROUP, U_MOBILE,
-    U_DOB, U_ADDRESS, U_NIC, U_EMAIL,
-    ISNULL(NULLIF(U_UID,''), U_CODE) AS U_UID,
-    U_GENDER, ISNULL(U_MEMSTATUS,0), ISNULL(U_SUBSSTATUS,0),
-    U_SUBSTYPE, U_EXPIREDDATE, ISNULL(U_MAXBORROW,0)
-FROM dbo.M_TBLUSERS
-WHERE U_CODE = @U;";
+                            SELECT
+                                U_CODE, U_NAME, ISNULL(U_ACTIVE,0), U_GROUP, U_MOBILE,
+                                U_DOB, U_ADDRESS, U_NIC, U_EMAIL,
+                                ISNULL(NULLIF(U_UID,''), U_CODE) AS U_UID,
+                                U_GENDER, ISNULL(U_MEMSTATUS,0), ISNULL(U_SUBSSTATUS,0),
+                                U_SUBSTYPE, U_EXPIREDDATE,U_REGISTEREDATE, ISNULL(U_MAXBORROW,0)
+                            FROM dbo.M_TBLUSERS
+                            WHERE U_CODE = @U;";
 
             await using var con = _db.CreateConnection();
             await using var cmd = new SqlCommand(sql, con);
@@ -112,7 +113,8 @@ WHERE U_CODE = @U;";
                 SubscriptionStatus: r.GetBoolean(12),
                 SubscriptionType: r.IsDBNull(13) ? null : r.GetString(13),
                 ExpireDate: r.IsDBNull(14) ? null : r.GetDateTime(14),
-                MaxBorrow: r.IsDBNull(15) ? 0 : Convert.ToInt32(r.GetValue(15))
+                RegisteredDate: r.IsDBNull(15) ? null : r.GetDateTime(15),
+                MaxBorrow: r.IsDBNull(16) ? 0 : Convert.ToInt32(r.GetValue(16))
             );
         }
 
