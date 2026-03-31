@@ -80,7 +80,6 @@ namespace LibraryMS.Win.Pages
 
             rdoActive.Checked = u.Active;
             rdoInactive.Checked = !u.Active;
-
             rdoMember.Checked = u.MemberStatus;
             rdoNonMember.Checked = !u.MemberStatus;
 
