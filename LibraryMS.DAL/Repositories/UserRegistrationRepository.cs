@@ -122,9 +122,9 @@ ORDER BY U_NAME;";
         public async Task<List<string>> GetUserLocationCodesAsync(string userCode)
         {
             const string sql = @"
-SELECT UL_USERLOC
-FROM dbo.M_TBLUSERLOCATION
-WHERE UL_USERCODE = @U AND ISNULL(UL_ACTIVE,0)=1;";
+                            SELECT UL_USERLOC
+                            FROM dbo.M_TBLUSERLOCATION
+                            WHERE UL_USERCODE = @U AND ISNULL(UL_ACTIVE,0)=1;";
 
             var list = new List<string>();
 
@@ -153,25 +153,25 @@ WHERE UL_USERCODE = @U AND ISNULL(UL_ACTIVE,0)=1;";
         public async Task UpdateUserAsync(SqlConnection con, SqlTransaction tx, UserUpdateRow u)
         {
             const string sql = @"
-UPDATE dbo.M_TBLUSERS
-SET
-    U_NAME       = @U_NAME,
-    U_ACTIVE     = @U_ACTIVE,
-    U_GROUP      = @U_GROUP,
-    U_MOBILE     = @U_MOBILE,
-    U_DOB        = @U_DOB,
-    U_ADDRESS    = @U_ADDRESS,
-    U_NIC        = @U_NIC,
-    U_UID        = @U_UID,
-    U_GENDER     = @U_GENDER,
-    U_MEMSTATUS  = @U_MEMSTATUS,
-    U_SUBSSTATUS = @U_SUBSSTATUS,
-    U_EMAIL      = @U_EMAIL,
-    U_SUBSTYPE   = @U_SUBSTYPE,
-    U_EXPIREDDATE= @U_EXPIREDDATE,
-    U_MAXBORROW  = @U_MAXBORROW,
-    M_DATE       = SYSDATETIME()
-WHERE U_CODE = @U_CODE;";
+                                UPDATE dbo.M_TBLUSERS
+                                SET
+                                    U_NAME       = @U_NAME,
+                                    U_ACTIVE     = @U_ACTIVE,
+                                    U_GROUP      = @U_GROUP,
+                                    U_MOBILE     = @U_MOBILE,
+                                    U_DOB        = @U_DOB,
+                                    U_ADDRESS    = @U_ADDRESS,
+                                    U_NIC        = @U_NIC,
+                                    U_UID        = @U_UID,
+                                    U_GENDER     = @U_GENDER,
+                                    U_MEMSTATUS  = @U_MEMSTATUS,
+                                    U_SUBSSTATUS = @U_SUBSSTATUS,
+                                    U_EMAIL      = @U_EMAIL,
+                                    U_SUBSTYPE   = @U_SUBSTYPE,
+                                    U_EXPIREDDATE= @U_EXPIREDDATE,
+                                    U_MAXBORROW  = @U_MAXBORROW,
+                                    M_DATE       = SYSDATETIME()
+                                WHERE U_CODE = @U_CODE;";
 
             await using var cmd = new SqlCommand(sql, con, tx);
 
@@ -211,9 +211,9 @@ WHERE U_CODE = @U_CODE;";
         public async Task UpdateUserPasswordAsync(SqlConnection con, SqlTransaction tx, string userCode, string newPasswordHash)
         {
             const string sql = @"
-UPDATE dbo.M_TBLUSERS
-SET U_PASSWORD = @PWD, M_DATE = SYSDATETIME()
-WHERE U_CODE = @U;";
+                                UPDATE dbo.M_TBLUSERS
+                                SET U_PASSWORD = @PWD, M_DATE = SYSDATETIME()
+                                WHERE U_CODE = @U;";
 
             await using var cmd = new SqlCommand(sql, con, tx);
             cmd.Parameters.Add("@U", SqlDbType.VarChar, 20).Value = userCode;
@@ -270,10 +270,10 @@ WHERE U_CODE = @U;";
         public async Task InsertUserLocationsAllAsync(SqlConnection con, SqlTransaction tx, string userCode, bool active)
         {
             const string sql = @"
-INSERT INTO dbo.M_TBLUSERLOCATION (UL_USERCODE, UL_USERLOC, UL_ACTIVE, M_DATE)
-SELECT @U, L_CODE, @A, SYSDATETIME()
-FROM dbo.M_LOCATION
-WHERE L_ACTIVE = 1;";
+                                INSERT INTO dbo.M_TBLUSERLOCATION (UL_USERCODE, UL_USERLOC, UL_ACTIVE, M_DATE)
+                                SELECT @U, L_CODE, @A, SYSDATETIME()
+                                FROM dbo.M_LOCATION
+                                WHERE L_ACTIVE = 1;";
 
             await using var cmd = new SqlCommand(sql, con, tx);
             cmd.Parameters.Add("@U", SqlDbType.VarChar, 20).Value = userCode;
