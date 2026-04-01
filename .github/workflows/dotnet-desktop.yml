@@ -9,10 +9,6 @@ on:
       - master
 
 env:
-  Solution_Name: LibraryMS/LibraryMS.sln
-  Test_Project_Path: LibraryMS/LibraryMS.Tests/LibraryMS.Tests.csproj
-  Wap_Project_Directory: LibraryMS/LibraryMS.Win
-  Wap_Project_Path: LibraryMS/LibraryMS.Win/LibraryMS.Win.csproj
   Pfx_Base64: ${{ secrets.PFX_BASE64 }}
   Pfx_Password: ${{ secrets.PFX_PASSWORD }}
 
@@ -40,19 +36,61 @@ jobs:
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
+      - name: Detect project paths
+        shell: pwsh
+        run: |
+          Write-Host "Workspace: $env:GITHUB_WORKSPACE"
+
+          $solution = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.sln | Select-Object -First 1
+          if (-not $solution) {
+            throw "No .sln file found in repository."
+          }
+
+          $testProject = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.csproj |
+            Where-Object { $_.Name -match 'Test|Tests' } |
+            Select-Object -First 1
+
+          $winProject = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.csproj |
+            Where-Object { $_.Name -eq 'LibraryMS.Win.csproj' } |
+            Select-Object -First 1
+
+          if (-not $winProject) {
+            $winProject = Get-ChildItem -Path $env:GITHUB_WORKSPACE -Recurse -Filter *.csproj |
+              Where-Object { $_.FullName -match 'LibraryMS\.Win' } |
+              Select-Object -First 1
+          }
+
+          if (-not $winProject) {
+            throw "LibraryMS.Win.csproj not found."
+          }
+
+          $wapDir = Split-Path $winProject.FullName -Parent
+
+          "Solution_Name=$($solution.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          if ($testProject) {
+            "Test_Project_Path=$($testProject.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+          "Wap_Project_Path=$($winProject.FullName)" | Out-File -FilePath $env:GITHUB_ENV -Append
+          "Wap_Project_Directory=$wapDir" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+          Write-Host "Solution: $($solution.FullName)"
+          if ($testProject) { Write-Host "Test Project: $($testProject.FullName)" }
+          Write-Host "Win Project: $($winProject.FullName)"
+          Write-Host "Project Directory: $wapDir"
+
       - name: Restore solution
         shell: pwsh
         run: |
-          msbuild $env:Solution_Name /t:Restore /p:Configuration=${{ matrix.configuration }}
+          msbuild "$env:Solution_Name" /t:Restore /p:Configuration=${{ matrix.configuration }}
 
       - name: Run unit tests
         shell: pwsh
         run: |
-          if (Test-Path $env:Test_Project_Path) {
-            dotnet test $env:Test_Project_Path --configuration ${{ matrix.configuration }} --no-restore
+          if ($env:Test_Project_Path -and (Test-Path "$env:Test_Project_Path")) {
+            dotnet test "$env:Test_Project_Path" --configuration ${{ matrix.configuration }} --no-restore
           }
           else {
-            Write-Host "Test project not found: $env:Test_Project_Path"
+            Write-Host "No test project found. Skipping tests."
           }
 
       - name: Decode the pfx
@@ -63,14 +101,12 @@ jobs:
             throw "PFX_BASE64 secret is missing."
           }
 
-          $projectDir = Join-Path $env:GITHUB_WORKSPACE $env:Wap_Project_Directory
-
-          if (-not (Test-Path $projectDir)) {
-            throw "Wap project directory not found: $projectDir"
+          if (-not (Test-Path "$env:Wap_Project_Directory")) {
+            throw "Project directory not found: $env:Wap_Project_Directory"
           }
 
           $pfx_cert_byte = [Convert]::FromBase64String("$env:Pfx_Base64")
-          $certificatePath = Join-Path $projectDir "GitHubActionsWorkflow.pfx"
+          $certificatePath = Join-Path "$env:Wap_Project_Directory" "GitHubActionsWorkflow.pfx"
 
           [IO.File]::WriteAllBytes($certificatePath, $pfx_cert_byte)
 
@@ -80,19 +116,23 @@ jobs:
         if: github.event_name == 'push'
         shell: pwsh
         run: |
-          msbuild $env:Wap_Project_Path `
+          if ([string]::IsNullOrWhiteSpace("$env:Pfx_Password")) {
+            throw "PFX_PASSWORD secret is missing."
+          }
+
+          msbuild "$env:Wap_Project_Path" `
             /p:Configuration=${{ matrix.configuration }} `
             /p:UapAppxPackageBuildMode=StoreUpload `
             /p:AppxBundle=Always `
             /p:AppxBundlePlatforms="x86|x64" `
             /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx `
-            /p:PackageCertificatePassword=$env:Pfx_Password
+            /p:PackageCertificatePassword="$env:Pfx_Password"
 
       - name: Remove the pfx
         if: github.event_name == 'push'
         shell: pwsh
         run: |
-          $certificatePath = Join-Path (Join-Path $env:GITHUB_WORKSPACE $env:Wap_Project_Directory) "GitHubActionsWorkflow.pfx"
+          $certificatePath = Join-Path "$env:Wap_Project_Directory" "GitHubActionsWorkflow.pfx"
           if (Test-Path $certificatePath) {
             Remove-Item $certificatePath -Force
           }
