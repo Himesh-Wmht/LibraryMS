@@ -55,11 +55,14 @@ jobs:
     runs-on: windows-latest  # For a list of available runner types, refer to
                              # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
 
-    env:
-      Solution_Name: LibraryMS.sln                         # Replace with your solution name, i.e. MyWpfApp.sln.
-      Test_Project_Path: LibraryMS.Tests/LibraryMS.Tests.csproj               # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
-      Wap_Project_Directory: LibraryMS.Win   # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
-      Wap_Project_Path: LibraryMS/LibraryMS.Win.csproj                 # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
+ env:
+  Solution_Name: LibraryMS.sln
+  Test_Project_Path: LibraryMS.Tests/LibraryMS.Tests.csproj
+  Wap_Project_Directory: LibraryMS.Win
+  Wap_Project_Path: LibraryMS.Win/LibraryMS.Win.csproj
+  Configuration: Release
+  Pfx_Base64: ${{ secrets.PFX_BASE64 }}
+  Pfx_Password: ${{ secrets.PFX_PASSWORD }}                # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
 
     steps:
     - name: Checkout
