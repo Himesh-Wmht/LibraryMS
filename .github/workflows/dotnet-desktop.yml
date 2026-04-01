@@ -9,10 +9,10 @@ on:
       - master
 
 env:
-  Solution_Name: LibraryMS.sln
-  Test_Project_Path: LibraryMS.Tests/LibraryMS.Tests.csproj
-  Wap_Project_Directory: LibraryMS.Win
-  Wap_Project_Path: LibraryMS.Win/LibraryMS.Win.csproj
+  Solution_Name: LibraryMS/LibraryMS.sln
+  Test_Project_Path: LibraryMS/LibraryMS.Tests/LibraryMS.Tests.csproj
+  Wap_Project_Directory: LibraryMS/LibraryMS.Win
+  Wap_Project_Path: LibraryMS/LibraryMS.Win/LibraryMS.Win.csproj
   Pfx_Base64: ${{ secrets.PFX_BASE64 }}
   Pfx_Password: ${{ secrets.PFX_PASSWORD }}
 
@@ -52,7 +52,7 @@ jobs:
             dotnet test $env:Test_Project_Path --configuration ${{ matrix.configuration }} --no-restore
           }
           else {
-            Write-Host "Test project not found at $env:Test_Project_Path - skipping tests."
+            Write-Host "Test project not found: $env:Test_Project_Path"
           }
 
       - name: Decode the pfx
